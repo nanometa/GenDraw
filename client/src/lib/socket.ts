@@ -90,10 +90,23 @@ export function computeBackoffSchedule(
 }
 
 /**
- * Resolve the Socket.IO server URL from the environment. Prefers the Vite
- * env var `VITE_SOCKET_URL`, falls back to the current page origin (so the
- * app works out of the box when client and server are served from the same
- * host), and finally to `http://localhost:3000` for non-browser environments.
+ * Resolve the Socket.IO server URL from the environment.
+ *
+ * Strategy:
+ *   1. Prefer the Vite env var `VITE_SOCKET_URL`. In production this
+ *      is the public URL of the relay (e.g. the Render Web Service);
+ *      in dev it is typically `http://localhost:3001`.
+ *   2. Fall back to the current page origin so a self-hosted
+ *      single-process deployment (client + server on the same host)
+ *      keeps working out of the box.
+ *   3. As a last resort, use `http://localhost:3000` for non-browser
+ *      contexts (tests, scripts).
+ *
+ * If `VITE_SOCKET_URL` is missing in a Vercel-style split deployment,
+ * the fallback to `window.location.origin` will silently point at the
+ * Vercel app itself — which can't host a Socket.IO server. We log a
+ * loud warning in that case so misconfigured deploys are obvious in
+ * the browser console rather than presenting as "no strokes appear".
  */
 export function resolveSocketUrl(): string {
   // `import.meta.env` is typed loosely by `vite/client`, so a defensive cast
@@ -104,6 +117,14 @@ export function resolveSocketUrl(): string {
   if (typeof envUrl === 'string' && envUrl.length > 0) return envUrl;
 
   if (typeof window !== 'undefined' && window.location && window.location.origin) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[gendraw] VITE_SOCKET_URL is not set. Falling back to %s, which only works ' +
+        'when client and relay share an origin. Strokes and chat will not propagate ' +
+        'across players in a Vercel-style split deployment until VITE_SOCKET_URL ' +
+        'points at the public relay URL.',
+      window.location.origin,
+    );
     return window.location.origin;
   }
 

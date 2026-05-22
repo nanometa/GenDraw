@@ -70,6 +70,40 @@ on <http://localhost:3001>. Open the client, connect a wallet on
 Studionet (the app prompts the network switch automatically), and create
 or join a room.
 
+## Deployment
+
+The client and the relay are split across two hosts because Vercel's
+serverless functions cannot keep WebSocket connections open — drawing
+strokes need a persistent Node process.
+
+### Client → Vercel
+
+1. Import this repo in Vercel and pick `client/` as the **Root
+   Directory**.
+2. Set the build command to `npm run build` and the output directory to
+   `dist`.
+3. Configure the project's environment variables (Settings →
+   Environment Variables):
+   - `VITE_WALLETCONNECT_PROJECT_ID`
+   - `VITE_SOCKET_URL` — the public URL of the relay (see below)
+4. Redeploy.
+
+### Relay → Render (free tier)
+
+The repo ships a [`render.yaml`](./render.yaml) Blueprint:
+
+1. New + → **Blueprint** in the Render dashboard, then point it at this
+   repo.
+2. Render provisions the `gendraw-server` Web Service automatically.
+3. Once deployed, copy the public URL Render shows (e.g.
+   `https://gendraw-server.onrender.com`) into Vercel's
+   `VITE_SOCKET_URL` and trigger a fresh client deploy.
+
+> If two players join a room and only one of them sees the strokes, the
+> client almost certainly can't reach the relay — re-check
+> `VITE_SOCKET_URL` on Vercel and confirm the Render service is awake
+> (free instances cold-start after ~15 minutes of inactivity).
+
 ### Useful scripts
 
 ```bash

@@ -1,0 +1,31 @@
+# Render.com deployment manifest for the GenDraw Socket.IO relay.
+#
+# Vercel hosts the static client bundle, but Vercel's serverless model
+# does not support persistent WebSocket connections — the relay
+# (`server/`) must live somewhere that allows a long-running Node
+# process. Render's free Web Service tier handles that cleanly.
+#
+# Usage:
+#   1. Push this repo to GitHub.
+#   2. On Render: New + → Blueprint → pick this repository.
+#   3. Render reads this file and provisions the `gendraw-server`
+#      Web Service automatically.
+#   4. Copy the public URL Render assigns (e.g.
+#      https://gendraw-server.onrender.com) into the Vercel env var
+#      `VITE_SOCKET_URL` and redeploy the client.
+services:
+  - type: web
+    name: gendraw-server
+    runtime: node
+    plan: free
+    region: frankfurt
+    # We install from the monorepo root so npm wires up the workspace
+    # symlink for the in-repo `@gendraw/contract` package the server
+    # imports. `tsx` is a devDependency, so we need the dev install
+    # flag for `npm run start` to find it at runtime.
+    buildCommand: npm ci --include=dev
+    startCommand: npm -w @gendraw/server run start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: 20
