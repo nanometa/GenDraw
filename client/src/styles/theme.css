@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Gartic.io-inspired theme: deep violet base with a soft animated radial
+   gradient, paired with the chunky Fredoka display font for headlines. */
+
+:root {
+  color-scheme: dark;
+}
+
+/* RainbowKit ConnectButton — re-skin handled entirely by the
+   `WalletBadge` component now (it uses `<ConnectButton.Custom>` and
+   renders its own pills with Tailwind glassmorphism classes). The
+   default `[data-rk]` chrome no longer renders, so there's nothing to
+   override here. */
+
+/* Number-input spinner buttons (for the "Max players" / "Rounds" inputs
+   on the Create Room form). Default browser styling renders a chunky
+   dark block on a coloured photo background, breaking the glass look. */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield; /* Firefox: hide the spinner entirely. */
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* Hide the page scrollbar everywhere — the slideshow on Home drives
+   navigation via wheel/scroll, and on the form pages there's nothing
+   tall enough to scroll. The track / thumb at the viewport edge is
+   visual noise that breaks the immersive look. */
+html {
+  scrollbar-width: none;          /* Firefox */
+  -ms-overflow-style: none;       /* old Edge / IE */
+}
+html::-webkit-scrollbar {
+  display: none;                  /* Chrome / Safari / new Edge */
+}
+
+body {
+  margin: 0;
+  color: #ffffff;
+  font-family:
+    'Nunito',
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+  background-color: #0e0728;
+  /* Two stacked radial gradients that drift slightly — they're absolute
+     so they cover the full viewport without affecting layout. */
+  background-image:
+    radial-gradient(
+      circle at 15% 20%,
+      rgba(168, 85, 247, 0.35) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 85% 80%,
+      rgba(236, 72, 153, 0.30) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(34, 211, 238, 0.10) 0%,
+      transparent 60%
+    );
+  background-attachment: fixed;
+  background-size: 100% 100%;
+}
+
+/* Decorative blob layer the page can opt into via `.blobs` class on a
+   container — used by the Home / Lobby pages for a more playful feel. */
+.blobs::before,
+.blobs::after {
+  content: '';
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: -1;
+}
+.blobs::before {
+  width: 280px;
+  height: 280px;
+  background: rgba(253, 224, 71, 0.18);
+  top: -80px;
+  right: -60px;
+  animation: float-1 9s ease-in-out infinite;
+}
+.blobs::after {
+  width: 240px;
+  height: 240px;
+  background: rgba(34, 211, 238, 0.18);
+  bottom: -60px;
+  left: -40px;
+  animation: float-2 11s ease-in-out infinite;
+}
+@keyframes float-1 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50%      { transform: translateY(20px) translateX(-10px); }
+}
+@keyframes float-2 {
+  0%, 100% { transform: translateY(0) translateX(0); }
+  50%      { transform: translateY(-25px) translateX(15px); }
+}
+
+/* Chunky CTA: bright fill + hard shadow + slight rotate-on-hover. The
+   :active drop simulates a real button press by removing the shadow. */
+.btn-chunky {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: 'Fredoka', 'Nunito', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  border-radius: 1rem;
+  padding: 0.75rem 1.5rem;
+  color: #110630;
+  background: #fde047;
+  box-shadow: 0 6px 0 0 rgba(0, 0, 0, 0.45);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+.btn-chunky:hover {
+  transform: translateY(-2px);
+  background: #facc15;
+}
+.btn-chunky:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 0 rgba(0, 0, 0, 0.45);
+}
+.btn-chunky.secondary {
+  color: white;
+  background: #ec4899;
+}
+.btn-chunky.secondary:hover {
+  background: #db2777;
+}
+.btn-chunky.tertiary {
+  color: white;
+  background: #a855f7;
+}
+.btn-chunky.tertiary:hover {
+  background: #9333ea;
+}
+.btn-chunky:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* Frosted glass card (Gartic's panels are translucent over a colorful
+   background — this re-creates the look). */
+.glass {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Inline-panel entrance for the Home SPA tabs: fade up + ease in.
+   Triggered by remount via React `key={activeTab}`. */
+.fade-slide-in {
+  animation: fade-slide-in 360ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes fade-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Hide the page scrollbar without losing scroll capability. The Home
+   slideshow drives navigation via wheel events, so the visual track on
+   the right side of the viewport is just clutter. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ---------------------------------------------------------------- */
+/* BrandMark — hue-cycle animation for the user-supplied PNG.       */
+/*                                                                  */
+/* The brand PNG is a solid-orange silhouette on a black background. */
+/* In `BrandMark.tsx` we use `mix-blend-mode: screen` to drop the    */
+/* black against the dark MorphicBackground, then drive              */
+/* `filter: hue-rotate(...)` from this keyframe so the surviving     */
+/* orange hue sweeps the whole colour wheel — the logo visibly      */
+/* "rainbows" without us having to recolour the asset itself.        */
+/*                                                                   */
+/* `saturate(1.15)` keeps the cycled hues vibrant against the dark   */
+/* backdrop; the `drop-shadow` adds a soft glow so the mark always   */
+/* reads as a discrete object even when the cycled hue passes        */
+/* through the backdrop's purple. `will-change: filter` promotes     */
+/* the layer to its own compositor surface for a smooth animation.   */
+/* ---------------------------------------------------------------- */
+@keyframes brand-hue-cycle {
+  from { filter: hue-rotate(0deg)   saturate(1.15) drop-shadow(0 0 6px rgba(255, 255, 255, 0.25)); }
+  to   { filter: hue-rotate(360deg) saturate(1.15) drop-shadow(0 0 6px rgba(255, 255, 255, 0.25)); }
+}
+.brand-hue-cycle {
+  animation: brand-hue-cycle 6s linear infinite;
+  will-change: filter;
+}
+.group:hover .brand-hue-cycle {
+  animation-duration: 2.4s;
+}

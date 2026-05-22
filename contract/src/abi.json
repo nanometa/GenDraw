@@ -1,0 +1,112 @@
+[
+  {
+    "type": "function",
+    "name": "create_room",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "name", "type": "string" },
+      { "name": "max_players", "type": "uint8" },
+      { "name": "total_rounds", "type": "uint8" }
+    ],
+    "outputs": [
+      { "name": "room_id", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "join_room",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" },
+      { "name": "player_name", "type": "string" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "start_game",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "submit_guess",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" },
+      { "name": "guess", "type": "string" }
+    ],
+    "outputs": [
+      { "name": "correct", "type": "bool" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "end_round",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" }
+    ],
+    "outputs": [
+      {
+        "name": "scores",
+        "type": "tuple[]",
+        "components": [
+          { "name": "player", "type": "address" },
+          { "name": "score", "type": "uint256" }
+        ]
+      }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_current_word",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" }
+    ],
+    "outputs": [
+      { "name": "word", "type": "string" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_room_count",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "count", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_total_games",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "total", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_leaderboard",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "room_id", "type": "uint256" }
+    ],
+    "outputs": [
+      {
+        "name": "entries",
+        "type": "tuple[]",
+        "components": [
+          { "name": "player", "type": "address" },
+          { "name": "name", "type": "string" },
+          { "name": "score", "type": "uint256" }
+        ]
+      }
+    ]
+  }
+]

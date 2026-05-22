@@ -1,0 +1,38 @@
+{
+  "name": "gendraw-monorepo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "GenDraw multiplayer drawing-and-guessing game on GenLayer",
+  "workspaces": [
+    "contract",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n client,server -c blue,green \"npm -w @gendraw/client run dev\" \"npm -w @gendraw/server run dev\"",
+    "dev:client": "npm -w @gendraw/client run dev",
+    "dev:server": "npm -w @gendraw/server run dev",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:client": "npm -w @gendraw/client run test",
+    "test:server": "npm -w @gendraw/server run test",
+    "lint": "eslint .",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.10.0",
+    "@types/node": "^20.14.10",
+    "@typescript-eslint/eslint-plugin": "^8.6.0",
+    "@typescript-eslint/parser": "^8.6.0",
+    "concurrently": "^9.0.1",
+    "eslint": "^9.10.0",
+    "eslint-plugin-react": "^7.36.1",
+    "eslint-plugin-react-hooks": "^5.1.0-rc-fb9a90fa48-20240614",
+    "globals": "^15.9.0",
+    "typescript": "^5.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

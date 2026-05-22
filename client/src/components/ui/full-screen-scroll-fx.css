@@ -1,0 +1,306 @@
+/**
+ * Styles for the FullScreenScrollFX scroll-pinned slideshow. Extracted out
+ * of the original `<style jsx>` block so the component works under Vite
+ * (no Next.js styled-jsx runtime). The host page is expected to pass
+ * `--fx-section-count` so the wrapper can size the scroll-pin container.
+ */
+
+.fx {
+  width: 100%;
+  overflow: hidden;
+  /* Transparent so the host page's background shows through. The
+     legacy `--fx-page-bg` solid is still set for components that
+     genuinely want an opaque page (just don't pass `''` slides). */
+  background: transparent;
+  color: #000;
+  font-family: var(--fx-font);
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+.fx-debug {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.8);
+  color: #000;
+  padding: 6px 8px;
+  font: 12px/1 monospace;
+  border-radius: 4px;
+}
+
+.fx-fixed-section {
+  position: relative;
+  /* Total scroll length scales with the number of sections (passed in
+     via `--fx-section-count`). One extra full viewport at the end keeps
+     the last frame on screen long enough for snap-points to land. */
+  height: calc((var(--fx-section-count, 1) + 1) * 100vh);
+}
+
+.fx-fixed {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.fx-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--fx-gap);
+  padding: 0 var(--fx-grid-px);
+  position: relative;
+  height: 100%;
+  z-index: 2;
+}
+
+.fx-bgs {
+  position: absolute;
+  inset: 0;
+  /* Transparent so the host page's backdrop (e.g. a global
+     AnimatedDots canvas mounted at the App level) shows through on
+     slides that pass an empty `background` string. The legacy
+     stage colour can still be brought back via `--fx-stage-bg`. */
+  background: transparent;
+  z-index: 1;
+}
+
+.fx-bg {
+  position: absolute;
+  inset: 0;
+}
+
+.fx-bg-img {
+  position: absolute;
+  inset: -10% 0 -10% 0;
+  width: 100%;
+  height: 120%;
+  object-fit: cover;
+  filter: brightness(0.95);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.fx-bg-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--fx-overlay);
+}
+
+.fx-header {
+  grid-column: 1 / 13;
+  align-self: start;
+  /* Center horizontally and add some breathing room from the top so
+     the wordmark sits clear of the wallet badge in the corner. */
+  padding-top: 6vh;
+  padding-bottom: 2vh;
+  font-size: clamp(1.5rem, 4.5vw, 3.5rem);
+  line-height: 0.95;
+  text-align: center;
+  color: var(--fx-text);
+  /* Opt out of the parent `.fx` uppercase rule so the GenDraw
+     wordmark renders mixed-case (matches the rest of the site). */
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+.fx-header > * { display: block; }
+
+.fx-content {
+  grid-column: 1 / 13;
+  position: absolute;
+  /* Push the centered titles down so they sit clear of the GenDraw
+     hero in the header. Without this they overlap on slide 1 because
+     the title's `position: absolute` ignores the header's height. */
+  inset: 22vh 0 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  align-items: start;
+  height: auto;
+  padding: 0 var(--fx-grid-px);
+}
+
+.fx-left,
+.fx-right {
+  height: 60vh;
+  overflow: hidden;
+  display: grid;
+  align-content: center;
+}
+.fx-left  { justify-items: start; }
+.fx-right { justify-items: end; }
+
+.fx-track { will-change: transform; }
+
+.fx-item {
+  color: var(--fx-text);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1;
+  margin: calc(var(--fx-row-gap) / 2) 0;
+  opacity: 0.35;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  position: relative;
+  font-size: clamp(1rem, 2.4vw, 1.8rem);
+  user-select: none;
+  cursor: pointer;
+}
+.fx-left-item.active,
+.fx-right-item.active { opacity: 1; }
+.fx-left-item.active  { transform: translateX(10px);  padding-left: 16px;  }
+.fx-right-item.active { transform: translateX(-10px); padding-right: 16px; }
+.fx-left-item.active::before,
+.fx-right-item.active::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 6px;
+  height: 6px;
+  background: var(--fx-text);
+  border-radius: 50%;
+}
+.fx-left-item.active::before  { left: 0;  }
+.fx-right-item.active::after  { right: 0; }
+
+.fx-center {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  height: 80vh;
+  overflow: visible;
+}
+
+.fx-featured {
+  position: absolute;
+  /* Top-anchored so the section content sits below the hero header,
+     not on top of it. The center column (.fx-content) already starts
+     22vh from the top so this 0 = right under the hero. */
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, 10px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Tight gap so the form / leaderboard sits right under the title
+     instead of floating in mid-air. */
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 640px;
+  padding: 0 1rem;
+}
+.fx-featured.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+.fx-featured-title {
+  margin: 0 auto;
+  color: var(--fx-text);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  line-height: 1.05;
+  text-align: center;
+}
+
+/* Slot for the form / leaderboard payload underneath the animated
+   title. No font-size inheritance, scrollable if it overflows. */
+.fx-featured-content {
+  width: 100%;
+  max-height: 55vh;
+  overflow-y: auto;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #fff;
+  text-align: left;
+  padding-right: 4px;
+}
+.fx-featured-content::-webkit-scrollbar {
+  width: 6px;
+}
+.fx-featured-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.fx-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: middle;
+}
+.fx-word {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.fx-footer {
+  grid-column: 1 / 13;
+  align-self: end;
+  padding-bottom: 5vh;
+  text-align: center;
+}
+
+.fx-footer-title {
+  color: var(--fx-text);
+  font-size: clamp(1.6rem, 7vw, 7rem);
+  font-weight: 900;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+}
+
+.fx-progress {
+  width: 200px;
+  height: 2px;
+  margin: 1rem auto 0;
+  background: rgba(245, 245, 245, 0.28);
+  position: relative;
+}
+.fx-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0%;
+  background: var(--fx-text);
+  height: 100%;
+  transition: width 0.3s ease;
+}
+.fx-progress-numbers {
+  position: absolute;
+  inset: auto 0 100% 0;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--fx-text);
+}
+
+.fx-end {
+  /* Hidden by default — pages that want a closing "fin" page can
+     override `display: grid` on this rule. */
+  display: none;
+}
+.fx-fin {
+  transform: rotate(90deg);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 900px) {
+  .fx-content {
+    grid-template-columns: 1fr;
+    row-gap: 3vh;
+    place-items: center;
+  }
+  .fx-left,
+  .fx-right,
+  .fx-center { height: auto; }
+  .fx-left,
+  .fx-right { justify-items: center; }
+  .fx-track { transform: none !important; }
+}
