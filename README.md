@@ -6,10 +6,6 @@ player draws the secret word their wallet uniquely sees, while everyone
 else races to guess it on chain — points, rotation, and the weekly
 leaderboard are all settled by a single deterministic Intelligent Contract.
 
-<p align="center">
-  <img src="client/public/brand-logo.png" alt="GenDraw logo" width="120" />
-</p>
-
 ## What's inside
 
 A three-workspace TypeScript monorepo:
