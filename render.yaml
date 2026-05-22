@@ -21,9 +21,10 @@ services:
     region: frankfurt
     # We install from the monorepo root so npm wires up the workspace
     # symlink for the in-repo `@gendraw/contract` package the server
-    # imports. `tsx` is a devDependency, so we need the dev install
-    # flag for `npm run start` to find it at runtime.
-    buildCommand: npm ci --include=dev
+    # imports. `tsx` is now a runtime dependency of `@gendraw/server`,
+    # so a plain production install is enough — no `--include=dev`
+    # flag needed for `npm run start` to find it.
+    buildCommand: npm ci
     startCommand: npm -w @gendraw/server run start
     healthCheckPath: /healthz
     envVars:
