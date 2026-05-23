@@ -72,7 +72,7 @@ export default function Leaderboard(): JSX.Element {
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center">
       <div className="relative w-full max-w-3xl flex flex-col items-center gap-8 px-4 py-10 sm:py-16">
-        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest uppercase text-[#00FF66] drop-shadow-[0_0_15px_rgba(0,255,102,0.5)]">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest uppercase text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
           LEADERBOARD
         </h2>
 
