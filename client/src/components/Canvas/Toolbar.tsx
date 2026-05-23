@@ -4,7 +4,7 @@
  */
 
 import { useId } from 'react';
-import { Pencil, Paintbrush, Highlighter, Eraser, Trash2, Palette } from 'lucide-react';
+import { Pencil, Paintbrush, Eraser, Trash2 } from 'lucide-react';
 
 export type ToolbarProps = {
   color: string;
@@ -149,14 +149,17 @@ export function Toolbar({
 
       {/* SECTION 3: Colors (Palette) */}
       <div className="flex items-center p-2 border-r border-white/10 gap-3">
-        {/* Custom Color Picker Button */}
-        <div className="flex flex-col items-center justify-center pl-1">
+        {/* Custom Color Picker Square */}
+        <div className="flex flex-col items-center justify-center pl-1 pr-2">
           <label
             htmlFor={customColorId}
-            className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer hover:scale-110 transition-transform bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 shadow-[0_0_10px_rgba(255,20,147,0.5)]"
+            className={[
+              'relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md border-2 border-white/20 shadow-inner',
+              'bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]',
+              'hover:scale-110 transition-transform duration-200',
+            ].join(' ')}
             title="Choose Custom Color"
           >
-            <Palette size={20} className="text-white drop-shadow-md" />
             <input
               id={customColorId}
               type="color"
@@ -165,7 +168,7 @@ export function Toolbar({
                 if (isEraser) onEraserToggle(false);
                 onColorChange(e.target.value);
               }}
-              className="opacity-0 absolute w-0 h-0"
+              className="opacity-0 absolute w-full h-full cursor-pointer"
             />
           </label>
         </div>
