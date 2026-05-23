@@ -76,7 +76,7 @@ export default function Leaderboard(): JSX.Element {
           LEADERBOARD
         </h2>
 
-        <section className="bg-black/60 border border-white/10 backdrop-blur-xl relative w-full max-w-lg space-y-6 rounded-2xl p-6 sm:p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+        <section className="bg-white/5 border border-white/10 backdrop-blur-md relative w-full max-w-lg space-y-6 rounded-2xl p-6 sm:p-7 shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
           <div className="space-y-3 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-white/80">
               Top scorers of the current week
@@ -201,8 +201,8 @@ export default function Leaderboard(): JSX.Element {
             type="button"
             onClick={() => navigate('/')}
             className={[
-              'w-full rounded-lg border border-white/20 bg-black/60 px-4 py-3',
-              'text-sm font-bold uppercase tracking-widest text-white backdrop-blur',
+              'w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3',
+              'text-sm font-bold uppercase tracking-widest text-white backdrop-blur-sm',
               'transition-all duration-200 hover:bg-white/10 hover:border-[#00FF66]',
               'focus:outline-none',
             ].join(' ')}
