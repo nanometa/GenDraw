@@ -72,36 +72,36 @@ export default function Leaderboard(): JSX.Element {
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center">
       <div className="relative w-full max-w-3xl flex flex-col items-center gap-8 px-4 py-10 sm:py-16">
-        <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.4)]">
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest uppercase text-[#00FF66] drop-shadow-[0_0_15px_rgba(0,255,102,0.5)]">
           LEADERBOARD
         </h2>
 
-        <section className="glass relative w-full max-w-lg space-y-6 rounded-3xl p-6 sm:p-7">
+        <section className="bg-black/60 border border-white/10 backdrop-blur-xl relative w-full max-w-lg space-y-6 rounded-2xl p-6 sm:p-7 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
           <div className="space-y-3 text-center">
-            <p className="text-xs font-semibold uppercase tracking-widest text-bg-deep">
+            <p className="text-xs font-bold uppercase tracking-widest text-white/80">
               Top scorers of the current week
             </p>
             <div className="flex items-center justify-center">
-              <span className="inline-flex items-center gap-2 rounded-xl border border-yellow/50 bg-yellow/30 px-5 py-2 font-mono text-lg font-bold text-bg-deep">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2 font-mono text-lg font-bold text-[#00FF66]">
                 Week #{weekId}
               </span>
             </div>
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-bg-deep">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-white/60">
               Top players
             </h3>
             {!loaded ? (
-              <p className="rounded-xl border border-bg-deep/20 bg-white/40 px-3 py-3 text-center text-sm text-bg-deep/80 backdrop-blur">
+              <p className="rounded-lg border border-white/10 bg-white/5 px-3 py-3 text-center text-sm font-bold text-white/80 backdrop-blur">
                 Loading scores…
               </p>
             ) : error !== null ? (
-              <p className="rounded-xl border border-pink/40 bg-pink/15 px-3 py-3 text-center text-sm font-semibold text-pink backdrop-blur">
+              <p className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-3 text-center text-sm font-bold text-red-400 backdrop-blur">
                 Couldn't load the leaderboard: {error}
               </p>
             ) : entries.length === 0 ? (
-              <p className="rounded-xl border border-bg-deep/20 bg-white/40 px-3 py-3 text-center text-sm font-bold text-bg-deep/80 backdrop-blur">
+              <p className="rounded-lg border border-white/10 bg-white/5 px-3 py-3 text-center text-sm font-bold text-white/80 backdrop-blur">
                 No ink on the wall yet. Be the first to score!
               </p>
             ) : (
@@ -120,28 +120,28 @@ export default function Leaderboard(): JSX.Element {
                     <li
                       key={entry.address}
                       className={[
-                        'flex items-center justify-between rounded-xl px-3 py-2.5 border backdrop-blur',
+                        'flex items-center justify-between rounded-lg px-3 py-2.5 border backdrop-blur transition-colors',
                         rank === 1
-                          ? 'bg-yellow/30 border-yellow/50'
-                          : 'bg-white/40 border-bg-deep/20',
+                          ? 'bg-[#00FF66]/10 border-[#00FF66]/50 shadow-[0_0_15px_rgba(0,255,102,0.15)]'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10',
                       ].join(' ')}
                     >
                       <span className="flex items-center gap-3 min-w-0">
                         <span
                           className={[
-                            'flex h-8 w-8 items-center justify-center rounded-full font-display font-bold text-sm',
+                            'flex h-8 w-8 items-center justify-center rounded-full font-bold text-sm',
                             rank === 1
-                              ? 'bg-yellow text-bg-deep'
+                              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.5)]'
                               : rank === 2
-                                ? 'bg-bg-deep/80 text-white'
+                                ? 'bg-gray-300 text-black shadow-[0_0_10px_rgba(209,213,219,0.5)]'
                                 : rank === 3
-                                  ? 'bg-pink text-white'
-                                  : 'bg-bg-deep/15 text-bg-deep',
+                                  ? 'bg-[#FF8C00] text-black shadow-[0_0_10px_rgba(255,140,0,0.5)]'
+                                  : 'bg-white/10 text-white/80',
                           ].join(' ')}
                         >
                           {medal ?? rank}
                         </span>
-                        <span className="font-semibold text-bg-deep truncate">
+                        <span className="font-bold text-white truncate">
                           {displayName(entry.address, undefined)}
                         </span>
                         <a
@@ -149,12 +149,12 @@ export default function Leaderboard(): JSX.Element {
                           target="_blank"
                           rel="noopener noreferrer"
                           title={entry.address}
-                          className="hidden sm:inline font-mono text-[10px] text-bg-deep/55 hover:text-bg-deep underline-offset-2 hover:underline"
+                          className="hidden sm:inline font-mono text-[10px] text-white/40 hover:text-[#00FF66] transition-colors underline-offset-2 hover:underline"
                         >
                           {shortAddr(entry.address)}
                         </a>
                       </span>
-                      <span className="font-display text-xl font-bold tabular-nums text-bg-deep">
+                      <span className="font-mono text-xl font-bold tabular-nums text-[#00FF66] tracking-wider">
                         {entry.score}
                       </span>
                     </li>
@@ -168,10 +168,10 @@ export default function Leaderboard(): JSX.Element {
             type="button"
             onClick={() => navigate('/')}
             className={[
-              'w-full rounded-xl border border-bg-deep/30 bg-bg-deep/85 px-4 py-3',
-              'text-sm font-semibold tracking-wide text-white backdrop-blur',
-              'transition-all duration-200 hover:bg-bg-deep hover:border-bg-deep/60',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+              'w-full rounded-lg border border-white/20 bg-black/60 px-4 py-3',
+              'text-sm font-bold uppercase tracking-widest text-white backdrop-blur',
+              'transition-all duration-200 hover:bg-white/10 hover:border-[#00FF66]',
+              'focus:outline-none',
             ].join(' ')}
           >
             ← Back home
