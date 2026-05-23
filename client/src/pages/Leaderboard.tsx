@@ -82,7 +82,7 @@ export default function Leaderboard(): JSX.Element {
               Top scorers of the current week
             </p>
             <div className="flex items-center justify-center">
-              <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2 font-mono text-lg font-bold text-[#00FF66]">
+              <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2 font-mono text-lg font-bold text-white shadow-sm">
                 Week #{weekId}
               </span>
             </div>
