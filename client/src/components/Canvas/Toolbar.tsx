@@ -4,7 +4,7 @@
  */
 
 import { useId } from 'react';
-import { Pencil, Paintbrush, Highlighter, Eraser, Trash2 } from 'lucide-react';
+import { Pencil, Paintbrush, Highlighter, Eraser, Trash2, Palette } from 'lucide-react';
 
 export type ToolbarProps = {
   color: string;
@@ -69,8 +69,8 @@ export function Toolbar({
       aria-label="Drawing toolbar"
       className="flex items-stretch rounded-lg border border-white/10 bg-[#111] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
     >
-      {/* SECTION 1: Tools (2x2 Grid) */}
-      <div className="grid grid-cols-2 grid-rows-2 gap-1 p-2 border-r border-white/10">
+      {/* SECTION 1: Tools (3 Columns) */}
+      <div className="grid grid-cols-3 gap-1 p-2 border-r border-white/10">
         <button
           type="button"
           aria-label="Pen"
@@ -92,38 +92,20 @@ export function Toolbar({
         <button
           type="button"
           aria-label="Brush"
-          aria-checked={!isEraser && clampedWidth > 5 && clampedWidth <= 18}
+          aria-checked={!isEraser && clampedWidth > 5}
           onClick={() => {
             if (isEraser) onEraserToggle(false);
             onWidthChange(10);
           }}
           className={[
             'flex items-center justify-center p-2 rounded transition-colors border',
-            !isEraser && clampedWidth > 5 && clampedWidth <= 18
+            !isEraser && clampedWidth > 5
               ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
               : 'text-white/60 hover:bg-white/5 border-transparent'
           ].join(' ')}
-          title="Brush (Medium)"
+          title="Brush (Thick)"
         >
           <Paintbrush size={18} />
-        </button>
-        <button
-          type="button"
-          aria-label="Marker"
-          aria-checked={!isEraser && clampedWidth > 18}
-          onClick={() => {
-            if (isEraser) onEraserToggle(false);
-            onWidthChange(24);
-          }}
-          className={[
-            'flex items-center justify-center p-2 rounded transition-colors border',
-            !isEraser && clampedWidth > 18
-              ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
-              : 'text-white/60 hover:bg-white/5 border-transparent'
-          ].join(' ')}
-          title="Marker (Thick)"
-        >
-          <Highlighter size={18} />
         </button>
         <button
           type="button"
@@ -167,14 +149,14 @@ export function Toolbar({
 
       {/* SECTION 3: Colors (Palette) */}
       <div className="flex items-center p-2 border-r border-white/10 gap-3">
-        {/* Primary Color Square Indicator */}
+        {/* Custom Color Picker Button */}
         <div className="flex flex-col items-center justify-center pl-1">
           <label
             htmlFor={customColorId}
-            className="w-10 h-10 rounded border-2 border-white/20 shadow-inner cursor-pointer hover:scale-105 transition-transform"
-            style={{ backgroundColor: isEraser ? '#ffffff' : color }}
-            title="Current Color"
+            className="flex items-center justify-center w-10 h-10 rounded-full cursor-pointer hover:scale-110 transition-transform bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 shadow-[0_0_10px_rgba(255,20,147,0.5)]"
+            title="Choose Custom Color"
           >
+            <Palette size={20} className="text-white drop-shadow-md" />
             <input
               id={customColorId}
               type="color"
@@ -183,7 +165,7 @@ export function Toolbar({
                 if (isEraser) onEraserToggle(false);
                 onColorChange(e.target.value);
               }}
-              className="opacity-0 w-full h-full cursor-pointer"
+              className="opacity-0 absolute w-0 h-0"
             />
           </label>
         </div>
