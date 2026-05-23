@@ -1043,9 +1043,8 @@ export default function Game(): JSX.Element {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
-      {/* ── Slim logo header ───────────────────────────────────────────── */}
-      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-surface/60 px-4 py-2 backdrop-blur">
-        <SiteWordmark size="sm" tagline={false} className="text-left" />
+      {/* ── Slim header — mobile score strip only ───────────────────────── */}
+      <header className="flex shrink-0 items-center justify-end gap-3 border-b border-white/10 bg-surface/60 px-4 py-2 backdrop-blur">
         {/* Mobile score strip — visible only below md breakpoint */}
         <div className="flex md:hidden items-center gap-2 overflow-x-auto">
           {players.map((player) => {
