@@ -222,7 +222,7 @@ export default function InlineCreatePanel(): JSX.Element {
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/15',
         ].join(' ')}
       >
-        {submitting ? 'Submitting…' : 'Create Room'}
+        {submitting ? 'Submitting…' : 'Play Now (Rsem W Win!)'}
       </button>
 
       {submitError && (

@@ -41,7 +41,7 @@ import Lobby from './pages/Lobby';
 import Results from './pages/Results';
 import { AnimatedDots } from './components/ui/animated-dots';
 import { GradientBars } from './components/ui/gradient-bars';
-import { MorphicBackground } from './components/ui/morphic-background';
+import InteractiveBackground from './components/InteractiveBackground';
 import { useGameStore } from './store/gameStore';
 
 /** Default auto-dismiss timeout for toasts in milliseconds. */
@@ -246,14 +246,7 @@ export default function App(): JSX.Element {
           })}
         >
           <BrowserRouter>
-            {/* Site-wide morphic background — coloured balls float
-                upward with a sine wobble, fused into organic blobs by
-                an SVG `goo` filter so any two balls that overlap
-                merge optically into a smooth shape (creates the
-                paint-mixing illusion). */}
-            <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-              <MorphicBackground spawnInterval={160} />
-            </div>
+            <InteractiveBackground />
             <WalletBadge />
             <GlobalConnectionStatus />
             <AppRoutes />

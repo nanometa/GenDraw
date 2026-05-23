@@ -30,7 +30,7 @@ export default {
       },
       fontFamily: {
         sans: [
-          'Nunito',
+          'Poppins',
           'ui-sans-serif',
           'system-ui',
           '-apple-system',
@@ -41,11 +41,9 @@ export default {
           'sans-serif',
         ],
         display: [
-          '"Fredoka"',
-          'Nunito',
-          'ui-sans-serif',
+          '"Rubik Spray Paint"',
+          'cursive',
           'system-ui',
-          'sans-serif',
         ],
       },
       boxShadow: {

@@ -88,6 +88,19 @@ export default function Home(): JSX.Element {
 
   return (
     <main className="relative min-h-full no-scrollbar">
+      {/* Graffiti Hero Title Overlay */}
+      <div className="pointer-events-none fixed top-8 left-0 right-0 z-40 flex flex-col items-center justify-center text-center px-4">
+        <h1 className="font-display text-5xl md:text-7xl font-bold tracking-wider text-white drop-shadow-[0_4px_0_rgba(236,72,153,0.8)] mb-2">
+          GENDRAW
+        </h1>
+        <p className="font-sans text-lg md:text-xl font-bold text-white/90 drop-shadow-md">
+          Draw it. Guess it. Win it.
+        </p>
+        <p className="mt-1 max-w-md font-sans text-xs md:text-sm text-white/70">
+          A graffiti-style drawing game made for quick sketches, funny guesses, and creative battles.
+        </p>
+      </div>
+
       {/* Floating sleek tab group — glassmorphic, follows scroll. */}
       <nav
         aria-label="Primary navigation"

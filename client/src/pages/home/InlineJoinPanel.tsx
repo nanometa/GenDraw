@@ -165,7 +165,7 @@ export default function InlineJoinPanel(): JSX.Element {
           'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white/15',
         ].join(' ')}
       >
-        {submitting ? 'Joining…' : 'Join Room'}
+        {submitting ? 'Joining…' : 'Join Game (Guess & Win)'}
       </button>
 
       {submitError && (

@@ -101,8 +101,8 @@ export default function Leaderboard(): JSX.Element {
                 Couldn't load the leaderboard: {error}
               </p>
             ) : entries.length === 0 ? (
-              <p className="rounded-xl border border-bg-deep/20 bg-white/40 px-3 py-3 text-center text-sm text-bg-deep/80 backdrop-blur">
-                No points scored yet this week. Be the first.
+              <p className="rounded-xl border border-bg-deep/20 bg-white/40 px-3 py-3 text-center text-sm font-bold text-bg-deep/80 backdrop-blur">
+                No ink on the wall yet. Be the first to score!
               </p>
             ) : (
               <ol className="space-y-2">
