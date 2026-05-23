@@ -1,28 +1,14 @@
 /**
  * Drawing Toolbar — pro-style controls for the active Drawer.
- *
- * Layout (Requirement 6.8 — "at least 8 colors", line-width control,
- * eraser, clear):
- *   1. 24-color grid palette covering monochromes, primaries, secondary
- *      accents, pastels, and skin tones — gives the drawer enough range
- *      for a Gartic-style party board without leaving the toolbar.
- *   2. Visual brush-size selector with 5 preset chips that render the
- *      stroke as an actual filled circle so the user picks by sight.
- *   3. Eraser toggle — when active the canvas paints with the
- *      background color (white, owned by the parent).
- *   4. Clear button — wipes the canvas.
- *
- * Component is fully controlled: every change is reported via the
- * matching callback prop. The parent owns `color`, `width`, and
- * `isEraser`.
+ * Refactored to resemble a classic MS Paint ribbon with a Tech-Brutalist Web3 aesthetic.
  */
 
 import { useId } from 'react';
+import { Pencil, Paintbrush, Highlighter, Eraser, Trash2 } from 'lucide-react';
 
 export type ToolbarProps = {
   color: string;
   onColorChange: (color: string) => void;
-  /** Stroke width in pixels. Must be in the inclusive range [2, 30]. */
   width: number;
   onWidthChange: (width: number) => void;
   isEraser: boolean;
@@ -30,35 +16,18 @@ export type ToolbarProps = {
   onClear: () => void;
 };
 
-/**
- * 24-swatch palette laid out as a 12 × 2 grid. Order:
- *   row 1 — monochrome ramp + primaries + secondaries.
- *   row 2 — pastels + skin tones + earth tones.
- *
- * Picked to give a balanced range without overlapping shades. Every
- * entry is a 6-digit hex literal so a property test can verify the
- * round-trip into stroke metadata is identity.
- */
 export const TOOLBAR_PALETTE: readonly string[] = [
-  // row 1 — bold tones (12)
   '#000000', '#4b5563', '#9ca3af', '#ffffff',
   '#ef4444', '#f97316', '#facc15', '#22c55e',
   '#0ea5e9', '#3b82f6', '#7c3aed', '#ec4899',
-  // row 2 — soft / earth tones (12)
   '#fda4af', '#fcd34d', '#bef264', '#86efac',
   '#67e8f9', '#a5b4fc', '#c4b5fd', '#f9a8d4',
   '#a16207', '#92400e', '#451a03', '#fde68a',
 ] as const;
 
-/** Inclusive lower / upper bounds for the line-width control. */
 export const MIN_WIDTH = 2;
 export const MAX_WIDTH = 30;
 
-/**
- * Brush-size presets shown as filled-circle chips. The user picks by
- * sight; the slider is gone but the underlying width range still
- * carries through `onWidthChange`.
- */
 const WIDTH_PRESETS: readonly number[] = [2, 5, 10, 18, 28];
 
 function clamp(value: number, min: number, max: number): number {
@@ -68,7 +37,6 @@ function clamp(value: number, min: number, max: number): number {
   return value;
 }
 
-/** Closest preset to `width` — used to render the active chip. */
 function pickClosestPreset(width: number): number {
   let best = WIDTH_PRESETS[0]!;
   let bestDelta = Math.abs(width - best);
@@ -99,214 +67,165 @@ export function Toolbar({
     <div
       role="toolbar"
       aria-label="Drawing toolbar"
-      className="flex flex-wrap items-center justify-center gap-4 rounded-full border border-white/10 bg-black/40 backdrop-blur-md px-6 py-2 shadow-lg"
+      className="flex items-stretch rounded-lg border border-white/10 bg-[#111] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.8)]"
     >
-      {/* Color palette — 12 × 2 grid */}
-      <div
-        role="radiogroup"
-        aria-label="Brush color"
-        className="grid grid-cols-12 gap-1.5"
-      >
-        {TOOLBAR_PALETTE.map((paletteColor) => {
-          const isActive =
-            !isEraser && paletteColor.toLowerCase() === color.toLowerCase();
-          return (
-            <button
-              key={paletteColor}
-              type="button"
-              role="radio"
-              aria-checked={isActive}
-              aria-label={`Color ${paletteColor}`}
-              title={paletteColor}
-              onClick={() => {
-                if (isEraser) onEraserToggle(false);
-                onColorChange(paletteColor);
-              }}
-              style={{ backgroundColor: paletteColor }}
-              className={[
-                'h-5 w-5 rounded-full border border-white/20 transition-all duration-200',
-                'hover:scale-110 focus:outline-none',
-                isActive
-                  ? 'ring-2 ring-offset-2 ring-offset-black ring-[#00FF66] scale-110'
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            />
-          );
-        })}
-      </div>
-
-      {/* Vertical separator */}
-      <div className="h-6 w-px bg-white/10 mx-1" />
-
-      {/* Custom color picker */}
-      <label
-        htmlFor={customColorId}
-        title="Pick a custom color"
-        aria-label="Custom color"
-        className={[
-          'relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-white/30',
-          'bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]',
-          'hover:scale-110 transition-transform duration-200',
-        ].join(' ')}
-      >
-        <input
-          id={customColorId}
-          type="color"
-          value={isEraser ? '#ffffff' : color}
-          onChange={(event) => {
-            if (isEraser) onEraserToggle(false);
-            onColorChange(event.target.value);
-          }}
-          className="absolute inset-0 cursor-pointer opacity-0"
-        />
-      </label>
-
-      {/* Vertical separator */}
-      <div className="h-6 w-px bg-white/10 mx-1" />
-
-      {/* Width presets */}
-      <div
-        role="radiogroup"
-        aria-label="Brush size"
-        className="flex items-center gap-2"
-      >
-        {WIDTH_PRESETS.map((preset) => {
-          const isActive = !isEraser && preset === activePreset;
-          const dotColor = isEraser ? '#ffffff' : color;
-          return (
-            <button
-              key={preset}
-              type="button"
-              role="radio"
-              aria-checked={isActive}
-              aria-label={`Brush size ${preset} pixels`}
-              title={`${preset}px`}
-              onClick={() => onWidthChange(preset)}
-              className={[
-                'flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200',
-                'hover:bg-white/10 focus:outline-none',
-                isActive ? 'bg-white/10 ring-1 ring-[#00FF66]' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  backgroundColor: dotColor,
-                  width: `${Math.min(preset, 20)}px`,
-                  height: `${Math.min(preset, 20)}px`,
-                  borderRadius: '50%',
-                  display: 'block',
-                  border:
-                    dotColor.toLowerCase() === '#ffffff'
-                      ? '1px solid rgba(255,255,255,0.45)'
-                      : '0',
-                }}
-              />
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Vertical separator */}
-      <div className="h-6 w-px bg-white/10 mx-1" />
-
-      {/* Tool group — pen / brush / marker / eraser. */}
-      <div
-        role="radiogroup"
-        aria-label="Drawing tool"
-        className="flex items-center gap-1"
-      >
+      {/* SECTION 1: Tools (2x2 Grid) */}
+      <div className="grid grid-cols-2 grid-rows-2 gap-1 p-2 border-r border-white/10">
         <button
           type="button"
-          role="radio"
+          aria-label="Pen"
           aria-checked={!isEraser && clampedWidth <= 5}
           onClick={() => {
             if (isEraser) onEraserToggle(false);
             onWidthChange(3);
           }}
           className={[
-            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
-            'focus:outline-none',
+            'flex items-center justify-center p-2 rounded transition-colors border',
             !isEraser && clampedWidth <= 5
-              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
-              : 'text-white/60 hover:bg-white/10 hover:text-white',
+              ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
+              : 'text-white/60 hover:bg-white/5 border-transparent'
           ].join(' ')}
+          title="Pen (Thin)"
         >
-          Pen
+          <Pencil size={18} />
         </button>
         <button
           type="button"
-          role="radio"
+          aria-label="Brush"
           aria-checked={!isEraser && clampedWidth > 5 && clampedWidth <= 18}
           onClick={() => {
             if (isEraser) onEraserToggle(false);
             onWidthChange(10);
           }}
           className={[
-            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
-            'focus:outline-none',
+            'flex items-center justify-center p-2 rounded transition-colors border',
             !isEraser && clampedWidth > 5 && clampedWidth <= 18
-              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
-              : 'text-white/60 hover:bg-white/10 hover:text-white',
+              ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
+              : 'text-white/60 hover:bg-white/5 border-transparent'
           ].join(' ')}
+          title="Brush (Medium)"
         >
-          Brush
+          <Paintbrush size={18} />
         </button>
         <button
           type="button"
-          role="radio"
+          aria-label="Marker"
           aria-checked={!isEraser && clampedWidth > 18}
           onClick={() => {
             if (isEraser) onEraserToggle(false);
             onWidthChange(24);
           }}
           className={[
-            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
-            'focus:outline-none',
+            'flex items-center justify-center p-2 rounded transition-colors border',
             !isEraser && clampedWidth > 18
-              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
-              : 'text-white/60 hover:bg-white/10 hover:text-white',
+              ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
+              : 'text-white/60 hover:bg-white/5 border-transparent'
           ].join(' ')}
+          title="Marker (Thick)"
         >
-          Marker
+          <Highlighter size={18} />
         </button>
         <button
           type="button"
-          role="radio"
+          aria-label="Eraser"
           aria-checked={isEraser}
           onClick={() => onEraserToggle(!isEraser)}
           className={[
-            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
-            'focus:outline-none',
+            'flex items-center justify-center p-2 rounded transition-colors border',
             isEraser
-              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
-              : 'text-white/60 hover:bg-white/10 hover:text-white',
+              ? 'bg-[#00FF66]/10 border-[#00FF66] text-[#00FF66]'
+              : 'text-white/60 hover:bg-white/5 border-transparent'
           ].join(' ')}
+          title="Eraser"
         >
-          Eraser
+          <Eraser size={18} />
         </button>
       </div>
 
-      {/* Vertical separator */}
-      <div className="h-6 w-px bg-white/10 mx-1" />
+      {/* SECTION 2: Sizes (Vertical Lines) */}
+      <div className="flex flex-col justify-center gap-1.5 p-3 border-r border-white/10 min-w-[70px]">
+        {WIDTH_PRESETS.map((preset) => {
+          const isActive = !isEraser && preset === activePreset;
+          return (
+            <button
+              key={preset}
+              onClick={() => onWidthChange(preset)}
+              className={[
+                'w-full py-1.5 flex justify-center items-center rounded transition-colors',
+                isActive ? 'bg-[#00FF66]/20' : 'hover:bg-white/10'
+              ].join(' ')}
+              title={`${preset}px`}
+            >
+              <div
+                className={['w-8 rounded-full', isActive ? 'bg-[#00FF66]' : 'bg-white/60'].join(' ')}
+                style={{ height: Math.max(2, preset / 2) }}
+              />
+            </button>
+          );
+        })}
+      </div>
 
-      {/* Clear button */}
-      <button
-        type="button"
-        onClick={onClear}
-        className={[
-          'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
-          'border border-red-500/40 bg-red-500/10 text-red-400',
-          'hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-300',
-          'focus:outline-none',
-        ].join(' ')}
-      >
-        Clear
-      </button>
+      {/* SECTION 3: Colors (Palette) */}
+      <div className="flex items-center p-2 border-r border-white/10 gap-3">
+        {/* Primary Color Square Indicator */}
+        <div className="flex flex-col items-center justify-center pl-1">
+          <label
+            htmlFor={customColorId}
+            className="w-10 h-10 rounded border-2 border-white/20 shadow-inner cursor-pointer hover:scale-105 transition-transform"
+            style={{ backgroundColor: isEraser ? '#ffffff' : color }}
+            title="Current Color"
+          >
+            <input
+              id={customColorId}
+              type="color"
+              value={isEraser ? '#ffffff' : color}
+              onChange={(e) => {
+                if (isEraser) onEraserToggle(false);
+                onColorChange(e.target.value);
+              }}
+              className="opacity-0 w-full h-full cursor-pointer"
+            />
+          </label>
+        </div>
+
+        {/* Dense 2-Row Grid */}
+        <div className="grid grid-cols-12 gap-1">
+          {TOOLBAR_PALETTE.map((paletteColor) => {
+            const isActive = !isEraser && paletteColor.toLowerCase() === color.toLowerCase();
+            return (
+              <button
+                key={paletteColor}
+                type="button"
+                onClick={() => {
+                  if (isEraser) onEraserToggle(false);
+                  onColorChange(paletteColor);
+                }}
+                className={[
+                  'w-5 h-5 rounded-sm border transition-transform',
+                  isActive 
+                    ? 'border-white scale-125 z-10 shadow-[0_0_8px_rgba(255,255,255,0.8)]' 
+                    : 'border-white/10 hover:scale-110'
+                ].join(' ')}
+                style={{ backgroundColor: paletteColor }}
+                title={paletteColor}
+              />
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SECTION 4: Actions */}
+      <div className="flex items-center p-3">
+        <button
+          type="button"
+          onClick={onClear}
+          className="flex flex-col items-center justify-center gap-1 p-2 rounded hover:bg-white/5 text-white/60 hover:text-pink transition-colors group"
+          title="Clear Canvas"
+        >
+          <Trash2 size={22} className="group-hover:scale-110 transition-transform" />
+          <span className="text-[10px] font-bold uppercase tracking-wider">Clear</span>
+        </button>
+      </div>
     </div>
   );
 }
