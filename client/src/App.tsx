@@ -16,7 +16,7 @@ import {
 } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
-  HashRouter,
+  BrowserRouter,
   Navigate,
   Route,
   Routes,
@@ -246,14 +246,14 @@ export default function App(): JSX.Element {
             borderRadius: 'large',
           })}
         >
-          <HashRouter>
+          <BrowserRouter>
             <InteractiveBackground />
             <WalletBadge />
             <GlobalConnectionStatus />
             <AppRoutes />
             <ToastBanner />
             <ErrorModal />
-          </HashRouter>
+          </BrowserRouter>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
