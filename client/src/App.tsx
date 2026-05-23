@@ -42,7 +42,6 @@ import Results from './pages/Results';
 import { AnimatedDots } from './components/ui/animated-dots';
 import { GradientBars } from './components/ui/gradient-bars';
 import { MorphicBackground } from './components/ui/morphic-background';
-import BrandMark from './components/BrandMark';
 import { useGameStore } from './store/gameStore';
 
 /** Default auto-dismiss timeout for toasts in milliseconds. */
@@ -256,7 +255,6 @@ export default function App(): JSX.Element {
               <MorphicBackground spawnInterval={160} />
             </div>
             <WalletBadge />
-            <BrandMark />
             <GlobalConnectionStatus />
             <AppRoutes />
             <ToastBanner />
