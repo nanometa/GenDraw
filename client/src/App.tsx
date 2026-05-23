@@ -82,13 +82,12 @@ function GlobalConnectionStatus(): JSX.Element | null {
   const path = typeof window !== 'undefined' ? window.location.pathname : '';
   const showsOn =
     path.startsWith('/lobby/') ||
-    path.startsWith('/game/') ||
     path.startsWith('/results/');
   if (!showsOn) return null;
   return (
-    // Pinned to the right edge but pushed below the WalletBadge
-    // (top-right) so the two never overlap on lobby/game/results.
-    <div className="fixed right-3 top-20 z-30">
+    // Pinned to the top left so it stays out of the way of the WalletBadge
+    // (top-right) and the Chat panel (right column).
+    <div className="fixed left-6 top-5 z-30">
       <ConnectionStatus status={connection} />
     </div>
   );

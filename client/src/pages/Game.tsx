@@ -46,6 +46,7 @@ import PlayerAvatar from '../components/PlayerAvatar';
 import ReadOnlyCanvas from '../components/Canvas/ReadOnlyCanvas';
 import ScoreCounter from '../components/ScoreCounter';
 import Toolbar, { TOOLBAR_PALETTE } from '../components/Canvas/Toolbar';
+import ConnectionStatus from '../components/ConnectionStatus';
 import WordHint from '../components/WordHint';
 
 import { submitGuess as submitGuessTx, endRound as endRoundTx } from '../lib/contract';
@@ -818,22 +819,29 @@ export default function Game(): JSX.Element {
   const playerListPanel = (
     <aside
       aria-label="Player list"
-      className="hidden md:flex md:flex-col gap-3 rounded-2xl glass p-4 text-white"
+      className="hidden md:flex md:flex-col gap-4 w-[280px]"
     >
-      <h2 className="text-xs font-bold uppercase tracking-widest text-white/70">
-        Players ({players.length})
-      </h2>
-      <ul className="flex flex-col gap-2">
+      <div className="flex items-center h-[48px]">
+        <h2 className="font-display text-2xl tracking-wider text-white">
+          PLAYERS <span className="font-sans text-sm font-bold opacity-80">({players.length})</span>
+        </h2>
+      </div>
+
+      {/* Connection Status sits neatly below the header */}
+      <div className="mb-2">
+        <ConnectionStatus
+          status={connection}
+          onManualReconnect={handleManualReconnect}
+        />
+      </div>
+
+      <ul className="flex flex-col gap-2 overflow-y-auto min-h-0">
         {players.map((player, index) => {
           const playerScore = scores[player.address] ?? 0;
           const isLocal = sameAddr(player.address, walletAddress);
           const isCurrentDrawer =
             drawerAddress !== null && sameAddr(player.address, drawerAddress);
           const playerLabel = displayName(player.address, player.name);
-          // Only meaningful while the round is live and this player is
-          // not the drawer. We compare the lowercased address against the
-          // attempts map / correct list because the contract may store
-          // checksummed mixed-case addresses.
           const myAddrLow = player.address.toLowerCase();
           const triedCount = (() => {
             let n = 0;
@@ -848,21 +856,20 @@ export default function Game(): JSX.Element {
           const guessedRight = correctThisTurn.some(
             (a) => a.toLowerCase() === myAddrLow,
           );
-          const showAttempts =
-            roomStatus === 'playing' && !isCurrentDrawer;
+          const showAttempts = roomStatus === 'playing' && !isCurrentDrawer;
           return (
             <li
               key={player.address}
               className={[
-                'flex items-center gap-2 rounded-xl px-2.5 py-2 border',
+                'flex items-center gap-3 rounded-xl px-3 py-2 border transition-colors',
                 isCurrentDrawer
-                  ? 'bg-yellow/15 border-yellow/40'
-                  : 'bg-white/5 border-white/10',
+                  ? 'bg-white/10 border-white/20'
+                  : 'bg-white/5 border-white/10 hover:bg-white/10',
               ].join(' ')}
             >
               <PlayerAvatar player={player} index={index} />
-              <div className="flex flex-1 flex-col leading-tight">
-                <span className="truncate text-sm font-semibold">
+              <div className="flex flex-1 min-w-0 flex-col leading-tight">
+                <span className="truncate text-sm font-semibold pr-2">
                   {playerLabel}
                   {isLocal ? (
                     <span className="ml-1 text-[10px] uppercase tracking-wide text-white/50">
@@ -871,7 +878,7 @@ export default function Game(): JSX.Element {
                   ) : null}
                 </span>
                 {isCurrentDrawer ? (
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-yellow">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-[#00FF66]">
                     drawing
                   </span>
                 ) : showAttempts ? (
@@ -904,30 +911,23 @@ export default function Game(): JSX.Element {
   const centerPanel = (
     <section
       aria-label="Drawing area"
-      // The center column is a flex column that fills the viewport
-      // height; the canvas takes the available space and the footer
-      // (word hint + round info) sits at the bottom of the column.
-      // No `aspect-square` so the canvas doesn't push the footer off
-      // the screen on standard 16:9 monitors.
-      className="flex h-full min-h-0 min-w-[280px] flex-col gap-2"
+      className="flex h-full min-h-0 min-w-[280px] flex-col gap-4"
     >
-      {isDrawer ? (
-        <Toolbar
-          color={color}
-          onColorChange={setColor}
-          width={width}
-          onWidthChange={setWidth}
-          isEraser={isEraser}
-          onEraserToggle={setIsEraser}
-          onClear={handleClearClicked}
-        />
-      ) : null}
+      <div className="flex items-center justify-center min-h-[48px]">
+        {isDrawer ? (
+          <Toolbar
+            color={color}
+            onColorChange={setColor}
+            width={width}
+            onWidthChange={setWidth}
+            isEraser={isEraser}
+            onEraserToggle={setIsEraser}
+            onClear={handleClearClicked}
+          />
+        ) : null}
+      </div>
       <div
-        // Canvas wrapper: `flex-1` so it grows to fill the available
-        // vertical space, `min-h-0` so it can shrink below its
-        // intrinsic content size. White surface, rounded corners, and
-        // a chunky shadow for the same paper feel as before.
-        className="relative w-full flex-1 min-h-0 overflow-hidden rounded-3xl bg-white shadow-chunky border-2 border-white/20"
+        className="relative w-full flex-1 min-h-0 overflow-hidden rounded-xl bg-white border border-white/10 shadow-[0_0_20px_rgba(0,0,0,0.3)]"
         style={{ minWidth: 280 }}
       >
         {isDrawer ? (
@@ -944,11 +944,7 @@ export default function Game(): JSX.Element {
           <ReadOnlyCanvas strokes={strokes} backgroundColor="#ffffff" />
         )}
       </div>
-      {/* Footer strip — word hint, round counter, manual end-round.
-          Sits below the canvas inside the flex column so it always
-          stays visible without needing to scroll. */}
       <div className="flex flex-col items-center gap-1.5 pb-1">
-        {/* Only show the word hint while the game is actively playing */}
         {roomStatus === 'playing' ? (
           <WordHint word={isDrawer ? word : null} isDrawer={isDrawer} />
         ) : null}
@@ -971,33 +967,34 @@ export default function Game(): JSX.Element {
     </section>
   );
 
-  // Chat panel — drawer's input is disabled (Req 8.12 / Property 16).
-  // Also disabled when the local guesser has either already guessed
-  // correctly (no double-scoring) or burned their 5 attempts. The remaining
-  // attempts counter is shown above the input as a small hint.
   const chatDisabled = isDrawer || alreadyCorrect || attemptsLeft <= 0;
   const chatPanel = (
-    <div className="flex h-full min-h-[260px] flex-col gap-2">
+    <aside aria-label="Chat panel" className="flex h-full min-h-[260px] flex-col gap-4 w-[280px]">
+      {/* Spacer to perfectly align with the absolute WalletBadge at the top right */}
+      <div className="h-[48px] w-full" />
+      
       {!isDrawer && roomStatus === 'playing' ? (
-        <div className="rounded-xl glass px-3 py-2 text-[11px] font-bold uppercase tracking-widest">
+        <div className="rounded-xl border border-white/10 bg-black/60 px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-center">
           {alreadyCorrect ? (
             <span className="text-green-bright">Correct — wait for next turn</span>
           ) : attemptsLeft <= 0 ? (
-            <span className="text-pink">no attempts left</span>
+            <span className="text-pink">No attempts left</span>
           ) : (
-            <span className="text-white/70">
-              attempts left: <strong className="text-yellow">{attemptsLeft}</strong>/{MAX_ATTEMPTS}
+            <span className="text-white/80">
+              Attempts left: <strong className="text-[#00FF66] text-[13px]">{attemptsLeft}</strong><span className="opacity-60">/{MAX_ATTEMPTS}</span>
             </span>
           )}
         </div>
       ) : null}
-      <Chat
-        messages={messages}
-        onSubmit={handleChatSubmit}
-        disabled={chatDisabled}
-        className="flex-1"
-      />
-    </div>
+      <div className="flex-1 min-h-0 bg-black/60 border border-white/10 rounded-xl overflow-hidden flex flex-col p-2">
+        <Chat
+          messages={messages}
+          onSubmit={handleChatSubmit}
+          disabled={chatDisabled}
+          className="flex-1 w-full"
+        />
+      </div>
+    </aside>
   );
 
   // Round-end modal (Req 9.4 / 7.4). Always rendered so transitions are
@@ -1079,7 +1076,7 @@ export default function Game(): JSX.Element {
       {/* ── Main 3-column game layout ───────────────────────────────────── */}
       <main
         // Single-column on <768 px (Req 15.2); 3-column at >=768 px (Req 15.3).
-        className="grid flex-1 overflow-hidden gap-3 p-3 grid-cols-1 md:grid-cols-[200px_1fr_280px] md:gap-4 md:p-4 [&>*]:min-h-0"
+        className="grid flex-1 overflow-hidden gap-3 p-3 grid-cols-1 md:grid-cols-[280px_1fr_280px] md:gap-6 md:p-6 md:pt-5 [&>*]:min-h-0"
       >
         {playerListPanel}
         {centerPanel}

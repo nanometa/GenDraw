@@ -73,7 +73,7 @@ const PILL_BASE = [
 
 export default function WalletBadge(): JSX.Element {
   return (
-    <div className="fixed right-3 top-3 z-30">
+    <div className="fixed right-6 top-5 z-30">
       <ConnectButton.Custom>
         {({
           account,

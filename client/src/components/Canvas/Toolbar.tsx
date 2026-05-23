@@ -99,13 +99,13 @@ export function Toolbar({
     <div
       role="toolbar"
       aria-label="Drawing toolbar"
-      className="flex flex-wrap items-center gap-3 rounded-2xl glass px-4 py-3 text-white"
+      className="flex flex-wrap items-center justify-center gap-4 rounded-full border border-white/10 bg-black/40 backdrop-blur-md px-6 py-2 shadow-lg"
     >
       {/* Color palette — 12 × 2 grid */}
       <div
         role="radiogroup"
         aria-label="Brush color"
-        className="grid grid-cols-12 gap-1"
+        className="grid grid-cols-12 gap-1.5"
       >
         {TOOLBAR_PALETTE.map((paletteColor) => {
           const isActive =
@@ -124,10 +124,10 @@ export function Toolbar({
               }}
               style={{ backgroundColor: paletteColor }}
               className={[
-                'h-6 w-6 rounded-md border border-white/20 transition',
-                'hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+                'h-5 w-5 rounded-full border border-white/20 transition-all duration-200',
+                'hover:scale-110 focus:outline-none',
                 isActive
-                  ? 'ring-2 ring-offset-2 ring-offset-bg-deep ring-yellow'
+                  ? 'ring-2 ring-offset-2 ring-offset-black ring-[#00FF66] scale-110'
                   : '',
               ]
                 .filter(Boolean)
@@ -137,18 +137,18 @@ export function Toolbar({
         })}
       </div>
 
-      {/* Custom color picker — fills the gap when the user wants
-          something outside the palette. The native swatch UI is
-          replaced by a single tiny chip + an absolutely-positioned
-          input that opens the color dialog on click. */}
+      {/* Vertical separator */}
+      <div className="h-6 w-px bg-white/10 mx-1" />
+
+      {/* Custom color picker */}
       <label
         htmlFor={customColorId}
         title="Pick a custom color"
         aria-label="Custom color"
         className={[
-          'relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border border-white/30',
+          'relative flex h-6 w-6 cursor-pointer items-center justify-center rounded-full border border-white/30',
           'bg-[conic-gradient(red,yellow,lime,cyan,blue,magenta,red)]',
-          'hover:scale-110 transition',
+          'hover:scale-110 transition-transform duration-200',
         ].join(' ')}
       >
         <input
@@ -163,16 +163,17 @@ export function Toolbar({
         />
       </label>
 
-      {/* Width presets — filled circles, biggest = boldest brush. */}
+      {/* Vertical separator */}
+      <div className="h-6 w-px bg-white/10 mx-1" />
+
+      {/* Width presets */}
       <div
         role="radiogroup"
         aria-label="Brush size"
-        className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 backdrop-blur"
+        className="flex items-center gap-2"
       >
         {WIDTH_PRESETS.map((preset) => {
           const isActive = !isEraser && preset === activePreset;
-          // Render the chip with the *current* color so the user
-          // previews the brush before drawing.
           const dotColor = isEraser ? '#ffffff' : color;
           return (
             <button
@@ -184,9 +185,9 @@ export function Toolbar({
               title={`${preset}px`}
               onClick={() => onWidthChange(preset)}
               className={[
-                'flex h-7 w-7 items-center justify-center rounded-md transition',
-                'hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
-                isActive ? 'bg-white/15 ring-2 ring-yellow' : '',
+                'flex h-8 w-8 items-center justify-center rounded-full transition-all duration-200',
+                'hover:bg-white/10 focus:outline-none',
+                isActive ? 'bg-white/10 ring-1 ring-[#00FF66]' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
@@ -195,10 +196,10 @@ export function Toolbar({
                 aria-hidden="true"
                 style={{
                   backgroundColor: dotColor,
-                  width: `${Math.min(preset, 18)}px`,
-                  height: `${Math.min(preset, 18)}px`,
-                  borderRadius: '9999px',
-                  display: 'inline-block',
+                  width: `${Math.min(preset, 20)}px`,
+                  height: `${Math.min(preset, 20)}px`,
+                  borderRadius: '50%',
+                  display: 'block',
                   border:
                     dotColor.toLowerCase() === '#ffffff'
                       ? '1px solid rgba(255,255,255,0.45)'
@@ -210,16 +211,14 @@ export function Toolbar({
         })}
       </div>
 
-      {/* Tool group — pen / brush / eraser. Pen and brush are mode
-          presets: pen snaps to a thin width (3px) and brush gives the
-          drawer a fatter mark (12px). Eraser swaps the paint colour
-          for the canvas background — the actual swap happens inside
-          DrawingCanvas via `applyStyle`. The selected tool ring uses
-          the yellow accent so the user can tell at a glance. */}
+      {/* Vertical separator */}
+      <div className="h-6 w-px bg-white/10 mx-1" />
+
+      {/* Tool group — pen / brush / marker / eraser. */}
       <div
         role="radiogroup"
         aria-label="Drawing tool"
-        className="flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur"
+        className="flex items-center gap-1"
       >
         <button
           type="button"
@@ -230,11 +229,11 @@ export function Toolbar({
             onWidthChange(3);
           }}
           className={[
-            'rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest transition',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
+            'focus:outline-none',
             !isEraser && clampedWidth <= 5
-              ? 'bg-yellow text-bg-deep'
-              : 'text-white/65 hover:bg-white/10 hover:text-white/90',
+              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+              : 'text-white/60 hover:bg-white/10 hover:text-white',
           ].join(' ')}
         >
           Pen
@@ -248,11 +247,11 @@ export function Toolbar({
             onWidthChange(10);
           }}
           className={[
-            'rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest transition',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
+            'focus:outline-none',
             !isEraser && clampedWidth > 5 && clampedWidth <= 18
-              ? 'bg-yellow text-bg-deep'
-              : 'text-white/65 hover:bg-white/10 hover:text-white/90',
+              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+              : 'text-white/60 hover:bg-white/10 hover:text-white',
           ].join(' ')}
         >
           Brush
@@ -266,11 +265,11 @@ export function Toolbar({
             onWidthChange(24);
           }}
           className={[
-            'rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest transition',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
+            'focus:outline-none',
             !isEraser && clampedWidth > 18
-              ? 'bg-yellow text-bg-deep'
-              : 'text-white/65 hover:bg-white/10 hover:text-white/90',
+              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+              : 'text-white/60 hover:bg-white/10 hover:text-white',
           ].join(' ')}
         >
           Marker
@@ -281,26 +280,29 @@ export function Toolbar({
           aria-checked={isEraser}
           onClick={() => onEraserToggle(!isEraser)}
           className={[
-            'rounded-lg px-3 py-1 text-xs font-bold uppercase tracking-widest transition',
-            'focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow',
+            'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
+            'focus:outline-none',
             isEraser
-              ? 'bg-yellow text-bg-deep'
-              : 'text-white/65 hover:bg-white/10 hover:text-white/90',
+              ? 'bg-[#00FF66] text-black shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+              : 'text-white/60 hover:bg-white/10 hover:text-white',
           ].join(' ')}
         >
           Eraser
         </button>
       </div>
 
+      {/* Vertical separator */}
+      <div className="h-6 w-px bg-white/10 mx-1" />
+
       {/* Clear button */}
       <button
         type="button"
         onClick={onClear}
         className={[
-          'rounded-xl px-3 py-1.5 text-sm font-semibold tracking-tight transition',
-          'border border-pink/40 bg-pink/15 text-pink-bright backdrop-blur',
-          'hover:bg-pink/25 hover:border-pink/60 hover:text-white',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-pink',
+          'rounded-full px-4 py-1.5 text-[11px] font-bold uppercase tracking-widest transition-all duration-200',
+          'border border-red-500/40 bg-red-500/10 text-red-400',
+          'hover:bg-red-500/20 hover:border-red-500/60 hover:text-red-300',
+          'focus:outline-none',
         ].join(' ')}
       >
         Clear

@@ -59,8 +59,8 @@ export function ConnectionStatus({
       aria-live="polite"
       aria-label={`Connection status: ${visuals.label}`}
       className={[
-        'inline-flex items-center gap-2 rounded-md bg-surface/80 px-3 py-1',
-        'text-sm text-white',
+        'inline-flex items-center gap-2 rounded-xl border border-white/10 bg-bg-deep/60 backdrop-blur-md px-3 py-1.5 shadow-[0_4px_12px_rgba(0,0,0,0.5)]',
+        'text-sm font-sans font-medium text-white/90',
         className ?? '',
       ]
         .filter(Boolean)

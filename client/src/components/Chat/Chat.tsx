@@ -177,7 +177,7 @@ export function Chat({
           }
           aria-label="Guess input"
           className={[
-            'flex-1 rounded-xl bg-white/10 border-2 border-white/15 px-3 py-2 text-sm font-semibold text-white',
+            'flex-1 min-w-0 rounded-xl bg-white/10 border-2 border-white/15 px-3 py-2 text-sm font-semibold text-white',
             'placeholder:text-white/40 placeholder:font-normal',
             'focus:outline-none focus:border-yellow focus:bg-white/15',
             'disabled:cursor-not-allowed disabled:bg-white/5 disabled:text-white/40 disabled:border-white/10',
