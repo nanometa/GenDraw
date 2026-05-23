@@ -20,6 +20,7 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 
@@ -79,7 +80,8 @@ function AppRoutes(): JSX.Element {
  */
 function GlobalConnectionStatus(): JSX.Element | null {
   const connection = useGameStore((s) => s.connection);
-  const path = typeof window !== 'undefined' ? window.location.pathname : '';
+  const location = useLocation();
+  const path = location.pathname;
   const showsOn =
     path.startsWith('/lobby/') ||
     path.startsWith('/results/');

@@ -69,10 +69,10 @@ export function WordHint({ word, isDrawer, revealed = false }: WordHintProps) {
       role="status"
       aria-label={ariaLabel}
       className={[
-        'flex flex-wrap items-baseline justify-center font-display tracking-wider',
+        'flex flex-wrap items-baseline justify-center font-mono uppercase tracking-widest',
         showFullWord
-          ? 'text-3xl font-bold text-yellow drop-shadow-[0_2px_0_rgba(0,0,0,0.4)]'
-          : 'text-3xl font-bold text-white',
+          ? 'text-4xl font-bold text-[#00FF66] drop-shadow-[0_0_10px_rgba(0,255,102,0.3)]'
+          : 'text-4xl font-bold text-white',
       ].join(' ')}
     >
       {Array.from(display).map((ch, i) => {
