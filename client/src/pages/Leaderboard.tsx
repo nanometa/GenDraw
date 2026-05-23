@@ -23,7 +23,7 @@ import {
 } from '../lib/contract';
 import { displayName, shortAddr } from '../lib/addr';
 import { EXPLORER_ADDR_URL } from '../components/TxHashLink';
-import SiteWordmark from '../components/SiteWordmark';
+
 
 /** Photo backdrop, kept consistent with the "Validator" / leaderboard
  *  slide on the landing page so the user gets a smooth visual hand-off.
@@ -72,8 +72,8 @@ export default function Leaderboard(): JSX.Element {
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center">
       <div className="relative w-full max-w-3xl flex flex-col items-center gap-8 px-4 py-10 sm:py-16">
-        <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-bg-deep drop-shadow-[0_3px_0_rgba(255,255,255,0.25)]">
-          Leaderboard
+        <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase text-white drop-shadow-[0_4px_0_rgba(0,0,0,0.4)]">
+          LEADERBOARD
         </h2>
 
         <section className="glass relative w-full max-w-lg space-y-6 rounded-3xl p-6 sm:p-7">
