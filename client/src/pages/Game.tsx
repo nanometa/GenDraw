@@ -39,7 +39,6 @@ import type {
 } from '@gendraw/contract';
 
 import Chat, { type ChatMessage } from '../components/Chat/Chat';
-import ConnectionStatus from '../components/ConnectionStatus';
 import DrawingCanvas, {
   type DrawingCanvasHandle,
 } from '../components/Canvas/DrawingCanvas';
@@ -949,7 +948,10 @@ export default function Game(): JSX.Element {
           Sits below the canvas inside the flex column so it always
           stays visible without needing to scroll. */}
       <div className="flex flex-col items-center gap-1.5 pb-1">
-        <WordHint word={isDrawer ? word : null} isDrawer={isDrawer} />
+        {/* Only show the word hint while the game is actively playing */}
+        {roomStatus === 'playing' ? (
+          <WordHint word={isDrawer ? word : null} isDrawer={isDrawer} />
+        ) : null}
         <div className="flex items-center justify-center gap-3 text-xs text-white/60">
           <span>
             Round {Math.max(roundNumber, 1)} / {Math.max(totalRounds, 1)}
@@ -1040,24 +1042,51 @@ export default function Game(): JSX.Element {
   ) : null;
 
   return (
-    <main
-      // Single-column on <768 px (Req 15.2); 3-column at >=768 px (Req 15.3).
-      // The fixed first/last columns and the flex middle column give the
-      // canvas the entire spare width, which keeps it centered and large
-      // while the player list and chat stay at predictable widths.
-      // `h-screen` + `overflow-hidden` keeps everything inside one
-      // viewport so the player can see the canvas, word hint, and end
-      // round button at the same time without scrolling. The `min-h-0`
-      // on every grid child is the magic incantation that lets a flex
-      // / grid item actually shrink below its content's intrinsic size
-      // — without it, the canvas pushes the footer (word + end-round)
-      // off the screen no matter how short the viewport is.
-      className="grid h-screen overflow-hidden gap-3 p-3 grid-cols-1 md:grid-cols-[200px_1fr_280px] md:gap-4 md:p-4 [&>*]:min-h-0"
-    >
-      {playerListPanel}
-      {centerPanel}
-      {chatPanel}
-      {roundEndModal}
-    </main>
+    <div className="flex h-screen flex-col overflow-hidden">
+      {/* ── Slim logo header ───────────────────────────────────────────── */}
+      <header className="flex shrink-0 items-center justify-between gap-3 border-b border-white/10 bg-surface/60 px-4 py-2 backdrop-blur">
+        <SiteWordmark size="sm" tagline={false} className="text-left" />
+        {/* Mobile score strip — visible only below md breakpoint */}
+        <div className="flex md:hidden items-center gap-2 overflow-x-auto">
+          {players.map((player) => {
+            const playerScore = scores[player.address] ?? 0;
+            const isLocal = sameAddr(player.address, walletAddress);
+            const isCurrentDrawer =
+              drawerAddress !== null && sameAddr(player.address, drawerAddress);
+            const playerLabel = displayName(player.address, player.name);
+            return (
+              <div
+                key={player.address}
+                className={[
+                  'flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-white',
+                  isCurrentDrawer
+                    ? 'border-yellow/50 bg-yellow/15'
+                    : 'border-white/10 bg-white/5',
+                ].join(' ')}
+              >
+                <PlayerAvatar player={player} index={players.indexOf(player)} />
+                <span className="font-semibold">
+                  {isLocal ? 'You' : playerLabel}
+                </span>
+                <span className="font-bold tabular-nums text-yellow">
+                  <ScoreCounter value={playerScore} />
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </header>
+
+      {/* ── Main 3-column game layout ───────────────────────────────────── */}
+      <main
+        // Single-column on <768 px (Req 15.2); 3-column at >=768 px (Req 15.3).
+        className="grid flex-1 overflow-hidden gap-3 p-3 grid-cols-1 md:grid-cols-[200px_1fr_280px] md:gap-4 md:p-4 [&>*]:min-h-0"
+      >
+        {playerListPanel}
+        {centerPanel}
+        {chatPanel}
+        {roundEndModal}
+      </main>
+    </div>
   );
 }
