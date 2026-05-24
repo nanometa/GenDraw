@@ -597,21 +597,37 @@ export default function Game(): JSX.Element {
   }, [routeRoomId, walletAddress, applyGameState, navigate]);
 
   // ── 3b. Wipe the canvas on every drawer rotation ──────────────────────
-  // The v3 contract increments `turn` on every drawer change (atomic with
-  // a correct guess or with `end_round`). When `turn` bumps we mirror it
-  // with a local stroke wipe + a `draw:clear` broadcast so the server's
-  // per-room stroke cache also drops (otherwise late joiners and the new
-  // drawer would re-fetch the previous turn's pixels via `strokes:replay`).
-  // Falls back to `roundNumber` when the contract pre-dates v3 (no `turn`
-  // field on the room payload).
-  const lastClearedTurnRef = useRef<number>(0);
+  // The authoritative signal that a turn has flipped is the on-chain
+  // `current_drawer` rotating to a new address. Watching that directly
+  // (rather than the contract's `turn` counter, which v5 doesn't always
+  // expose, or the `current_round` counter, which only bumps once every
+  // few drawer rotations) guarantees every connected client wipes its
+  // canvas at the exact moment a new player takes the brush.
+  //
+  // Each peer's contract poll independently observes the same drawer
+  // change, so each peer:
+  //   1. resets its local `strokes` array via `applyClear()` (the
+  //      ReadOnlyCanvas re-renders blank because it's purely a
+  //      function of `strokes`),
+  //   2. emits a `draw:clear` to the relay so the server's per-room
+  //      stroke cache is also dropped (otherwise late-joining
+  //      guessers would re-fetch the previous turn's pixels on
+  //      `strokes:replay`).
+  //
+  // The first observed drawer (transition from "" / null → first
+  // address when the host calls `start_game`) is skipped because there
+  // are no strokes to clear yet.
+  const lastClearedDrawerRef = useRef<string | null>(null);
   useEffect(() => {
-    if (turnNumber <= 0) return;
-    if (lastClearedTurnRef.current === turnNumber) return;
-    // Skip the very first transition (0 -> 1) when the game first starts:
-    // there are no strokes to clear and no stale cache.
-    const isFirstStart = lastClearedTurnRef.current === 0;
-    lastClearedTurnRef.current = turnNumber;
+    // Don't act on transient nulls (poll mid-flight, RPC blip).
+    if (drawerAddress === null) return;
+    if (drawerAddress.length === 0) return;
+    const previous = lastClearedDrawerRef.current;
+    if (previous !== null && previous.toLowerCase() === drawerAddress.toLowerCase()) {
+      return;
+    }
+    const isFirstStart = previous === null;
+    lastClearedDrawerRef.current = drawerAddress;
     if (isFirstStart) return;
 
     applyClear();
@@ -619,14 +635,14 @@ export default function Game(): JSX.Element {
     setMessages((prev) => [
       ...prev,
       {
-        id: `turn-${turnNumber}`,
+        id: `drawer-rotate-${drawerAddress}-${Date.now()}`,
         address: walletAddressRef.current,
         name: 'system',
-        text: `─── Turn ${turnNumber} ───`,
+        text: `─── New drawer ───`,
         kind: 'system',
       },
     ]);
-  }, [turnNumber, applyClear]);
+  }, [drawerAddress, applyClear]);
 
   // ── 4. Drawer fetches its own word from the contract ──────────────────
   // The contract gates `get_current_word` on `msg.sender == current_drawer`,
