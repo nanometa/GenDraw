@@ -680,6 +680,25 @@ export default function Game(): JSX.Element {
   // happy path. The host can still manually skip a round via the "End
   // round" button (handleManualEndRound below).
 
+  // ── Leave Match ────────────────────────────────────────────────────────
+  // Destructive action available to any player while the match is live.
+  // Today it disconnects the Socket.IO transport and routes the player
+  // back to Home so the room frees up the slot client-side. Wiring it to
+  // a future on-chain `leave_room` contract call (so the player is
+  // removed from the active turn rotation on chain) only requires
+  // dropping the `submitLeaveTx(...)` call into this handler — the
+  // button markup below references it by name so no JSX change is
+  // needed when that contract path lands.
+  const handleLeaveMatch = (): void => {
+    const ok = window.confirm(
+      'Leave the match? Your remaining attempts will be forfeited.',
+    );
+    if (!ok) return;
+    socketRef.current?.disconnect();
+    socketRef.current = null;
+    navigate('/');
+  };
+
   // Manual fallback the host can use to skip a round when nobody guesses.
   const handleManualEndRound = (): void => {
     if (writeClient === null) return;
@@ -960,6 +979,55 @@ export default function Game(): JSX.Element {
               title="End the current round on-chain (host only)"
             >
               End round
+            </button>
+          ) : null}
+          {/*
+            LEAVE MATCH — destructive action, available to every player
+            while the match is live. Technical-brutalist styling: dark
+            translucent slab, neon-crimson accent, terminal-style
+            uppercase tracking, with a phosphor glow on hover that
+            matches the rest of the in-match UI. The button stays
+            visually tied to the End Round button (same row, same gap)
+            so they read as a footer toolbar, but the colour separates
+            it as the more destructive of the two actions. The icon is
+            an inline SVG door-with-arrow ("log out") so we don't pull
+            in an icon library for one glyph.
+          */}
+          {roomStatus === 'playing' ? (
+            <button
+              type="button"
+              onClick={handleLeaveMatch}
+              title="Leave this match — you'll be removed from the turn rotation"
+              className={[
+                'group inline-flex items-center gap-1.5',
+                'rounded-md border border-red-500/50 bg-black/80',
+                'px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest',
+                'text-red-400',
+                'transition-all duration-200 ease-out',
+                'hover:bg-red-500/10 hover:border-red-400 hover:text-red-300',
+                'hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60',
+                'active:translate-y-[1px]',
+              ].join(' ')}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                width="12"
+                height="12"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="transition-transform duration-200 group-hover:translate-x-[1px]"
+              >
+                {/* Door frame on the left, arrow exiting to the right. */}
+                <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              Leave match
             </button>
           ) : null}
         </div>
