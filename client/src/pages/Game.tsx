@@ -1166,9 +1166,14 @@ export default function Game(): JSX.Element {
   // / phosphor-green aesthetic of the rest of the in-match UI.
   //
   // Visual blueprint:
-  //   - Dark blurred backdrop fills the viewport, capturing clicks so
-  //     the user can dismiss the modal by clicking outside the panel
-  //     (the panel itself stops click propagation).
+  //   - Dark blurred backdrop fills the viewport. We deliberately do
+  //     NOT bind a click handler to the backdrop: under React 17+'s
+  //     root-level event delegation, the same synthetic click that
+  //     fired `setIsLeaveModalOpen(true)` keeps bubbling after the
+  //     modal mounts, lands on the freshly-rendered backdrop, and
+  //     cancels the modal in the same tick — the user sees a flicker
+  //     and a navigation. Closing is therefore confined to the
+  //     explicit Cancel button and the Escape key.
   //   - Sharp dark slab (`#0a0a0a`) with a thin neon-red border, no
   //     rounded corners beyond a subtle `rounded-md`. A faint
   //     phosphor-green glow on the wrapper hints that the modal lives
@@ -1187,16 +1192,12 @@ export default function Game(): JSX.Element {
       role="dialog"
       aria-modal="true"
       aria-labelledby="leave-match-modal-title"
-      onClick={cancelLeaveMatch}
       onKeyDown={(e) => {
         if (e.key === 'Escape') cancelLeaveMatch();
       }}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"
     >
       <div
-        // Stop the backdrop click handler from firing when the user
-        // clicks inside the panel itself.
-        onClick={(e) => e.stopPropagation()}
         className={[
           // Sharp brutalist slab.
           'relative w-full max-w-md',
