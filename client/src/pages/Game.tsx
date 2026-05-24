@@ -199,6 +199,14 @@ export default function Game(): JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [roundEnd, setRoundEnd] = useState<RoundEndState>(INITIAL_ROUND_END);
 
+  /**
+   * Toggles the custom Leave Match confirmation modal. Replaces the
+   * native `window.confirm()` (which can't be styled and breaks the
+   * brutalist theme) with a controlled overlay rendered in this
+   * component's tree — see `leaveMatchModal` further below.
+   */
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState<boolean>(false);
+
   // Refs that need to outlive renders (transport, canvas handle).
   const socketRef = useRef<SocketClient | null>(null);
   const canvasRef = useRef<DrawingCanvasHandle | null>(null);
@@ -698,18 +706,24 @@ export default function Game(): JSX.Element {
 
   // ── Leave Match ────────────────────────────────────────────────────────
   // Destructive action available to any player while the match is live.
-  // Today it disconnects the Socket.IO transport and routes the player
-  // back to Home so the room frees up the slot client-side. Wiring it to
-  // a future on-chain `leave_room` contract call (so the player is
-  // removed from the active turn rotation on chain) only requires
-  // dropping the `submitLeaveTx(...)` call into this handler — the
-  // button markup below references it by name so no JSX change is
-  // needed when that contract path lands.
+  // Two-step flow: clicking the footer "Leave match" button opens a
+  // custom React modal (`leaveMatchModal` below); confirming inside the
+  // modal disconnects the Socket.IO transport and routes the player
+  // back to Home. Wiring it to a future on-chain `leave_room` contract
+  // call (so the player is removed from the active turn rotation on
+  // chain) only requires dropping the `submitLeaveTx(...)` call into
+  // `confirmLeaveMatch` — the markup below references both handlers
+  // by name so no JSX change is needed when that contract path lands.
   const handleLeaveMatch = (): void => {
-    const ok = window.confirm(
-      'Leave the match? Your remaining attempts will be forfeited.',
-    );
-    if (!ok) return;
+    setIsLeaveModalOpen(true);
+  };
+
+  const cancelLeaveMatch = (): void => {
+    setIsLeaveModalOpen(false);
+  };
+
+  const confirmLeaveMatch = (): void => {
+    setIsLeaveModalOpen(false);
     socketRef.current?.disconnect();
     socketRef.current = null;
     navigate('/');
@@ -1122,6 +1136,136 @@ export default function Game(): JSX.Element {
     </div>
   ) : null;
 
+  // Leave-match confirmation modal — replaces the native window.confirm
+  // popup with a custom overlay that matches the technical-brutalist
+  // / phosphor-green aesthetic of the rest of the in-match UI.
+  //
+  // Visual blueprint:
+  //   - Dark blurred backdrop fills the viewport, capturing clicks so
+  //     the user can dismiss the modal by clicking outside the panel
+  //     (the panel itself stops click propagation).
+  //   - Sharp dark slab (`#0a0a0a`) with a thin neon-red border, no
+  //     rounded corners beyond a subtle `rounded-md`. A faint
+  //     phosphor-green glow on the wrapper hints that the modal lives
+  //     inside the same console as the rest of the in-match UI.
+  //   - Header reads like a system console line ("SYSTEM // LEAVE_MATCH")
+  //     and the body is a monospace warning.
+  //   - Two terminal-style buttons: a neutral CANCEL on the left
+  //     (green text on hover) and a high-contrast CONFIRM LEAVE on the
+  //     right (neon-red, glow-on-hover).
+  //
+  // Keyboard: pressing Escape inside the modal collapses it just like
+  // CANCEL. Focus trapping is intentionally light — the panel autofocuses
+  // CANCEL so a confirmed Enter requires explicit tab + activate.
+  const leaveMatchModal = isLeaveModalOpen ? (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="leave-match-modal-title"
+      onClick={cancelLeaveMatch}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') cancelLeaveMatch();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 backdrop-blur-sm"
+    >
+      <div
+        // Stop the backdrop click handler from firing when the user
+        // clicks inside the panel itself.
+        onClick={(e) => e.stopPropagation()}
+        className={[
+          // Sharp brutalist slab.
+          'relative w-full max-w-md',
+          'rounded-md border border-red-500/60 bg-[#0a0a0a]',
+          'shadow-[0_0_30px_rgba(239,68,68,0.25),0_0_2px_rgba(34,197,94,0.4)]',
+          // Subtle scan-line / mineral texture over the whole panel.
+          // Layered linear-gradients render cheaply and blend into the
+          // dark fill without dragging in an asset.
+          'before:pointer-events-none before:absolute before:inset-0 before:rounded-md',
+          'before:[background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.025)_0px,rgba(255,255,255,0.025)_1px,transparent_1px,transparent_3px)]',
+          'before:opacity-60',
+        ].join(' ')}
+      >
+        {/* Console-style header bar. */}
+        <div className="flex items-center justify-between border-b border-red-500/30 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.25em] text-red-400">
+          <span
+            id="leave-match-modal-title"
+            className="flex items-center gap-2"
+          >
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+            System // Leave_Match
+          </span>
+          <span className="text-white/30">v5</span>
+        </div>
+
+        {/* Body — terminal-style monospace warning. */}
+        <div className="px-5 py-5 font-mono text-sm leading-relaxed text-white/85">
+          <p>
+            <span className="text-green-400">$</span>{' '}
+            <span className="text-white">leave_match --confirm</span>
+          </p>
+          <p className="mt-2 text-white/70">
+            &gt; Leave the match?
+          </p>
+          <p className="mt-1 text-red-300/90">
+            &gt; Your remaining attempts will be forfeited.
+          </p>
+        </div>
+
+        {/* Action row. */}
+        <div className="flex items-center justify-end gap-3 border-t border-white/10 bg-black/40 px-4 py-3">
+          <button
+            type="button"
+            autoFocus
+            onClick={cancelLeaveMatch}
+            className={[
+              'rounded-md border border-white/15 bg-black/60',
+              'px-4 py-1.5 font-mono text-[11px] font-bold uppercase tracking-widest',
+              'text-white/70',
+              'transition-all duration-150 ease-out',
+              'hover:border-green-500/60 hover:bg-green-500/5 hover:text-green-300',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400/60',
+            ].join(' ')}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={confirmLeaveMatch}
+            className={[
+              'group inline-flex items-center gap-1.5',
+              'rounded-md border border-red-500/70 bg-red-500/10',
+              'px-4 py-1.5 font-mono text-[11px] font-bold uppercase tracking-widest',
+              'text-red-300',
+              'transition-all duration-150 ease-out',
+              'hover:bg-red-500/20 hover:border-red-400 hover:text-red-100',
+              'hover:shadow-[0_0_20px_rgba(239,68,68,0.7)]',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60',
+              'active:translate-y-[1px]',
+            ].join(' ')}
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="transition-transform duration-200 group-hover:translate-x-[1px]"
+            >
+              <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Confirm leave
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       {/* ── Slim header — mobile score strip only ───────────────────────── */}
@@ -1166,6 +1310,7 @@ export default function Game(): JSX.Element {
         {centerPanel}
         {chatPanel}
         {roundEndModal}
+        {leaveMatchModal}
       </main>
     </div>
   );
