@@ -354,17 +354,42 @@ export default function Game(): JSX.Element {
       scores: Record<string, number>;
     }): void => {
       applyGuessCorrect(payload);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `correct-${payload.txHash}-${payload.address}`,
-          address: payload.address,
-          name: payload.name,
-          text: `guessed "${payload.text}"`,
-          kind: 'correct',
-          txHash: payload.txHash,
-        },
-      ]);
+      // Spoiler protection: when the contract confirms a guess as
+      // correct, retroactively redact the literal answer from chat so
+      // it doesn't keep spoiling the round for slower guessers.
+      //
+      // We do this client-side because the relay is intentionally
+      // trust-free (it never sees the round's secret word, so it can't
+      // intercept the original `chat:guess` broadcast). The trade-off
+      // is a brief 1–2s window between the optimistic chat broadcast
+      // and the contract receipt, during which the literal answer is
+      // visible. After that window, every peer's chat converges on
+      // the same redacted log.
+      //
+      // The redaction is identity-based (sender address + sanitized
+      // text), so any number of duplicate "elephant" lines from the
+      // same player collapse into a single phosphor-green system
+      // announcement.
+      const senderAddr = payload.address.toLowerCase();
+      const guessedText = payload.text.trim().toLowerCase();
+      setMessages((prev) => {
+        const cleaned = prev.filter((m) => {
+          if (m.kind !== 'guess') return true;
+          if (m.address.toLowerCase() !== senderAddr) return true;
+          return m.text.trim().toLowerCase() !== guessedText;
+        });
+        return [
+          ...cleaned,
+          {
+            id: `correct-${payload.txHash}-${payload.address}`,
+            address: payload.address,
+            name: payload.name,
+            text: 'guessed the correct answer!',
+            kind: 'correct',
+            txHash: payload.txHash,
+          },
+        ];
+      });
     };
     const handleGuessWrong = (payload: {
       text: string;

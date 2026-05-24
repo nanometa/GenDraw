@@ -57,8 +57,19 @@ export type ChatProps = {
 function rowClassesFor(kind: ChatMessage['kind']): string {
   switch (kind) {
     case 'correct':
-      // Correct guesses get a green tint and bold name to make them pop.
-      return 'rounded-xl bg-green/15 border border-green/40 px-3 py-1.5 text-green-bright font-semibold';
+      // Phosphor-green announcement that pops out of the regular chat
+      // log. Bright #39ff14 text with a soft text-shadow glow makes it
+      // read like a CRT system notification, matching the brutalist
+      // / terminal aesthetic of the rest of the in-match UI. The bubble
+      // is dark with a subtle green border so it doesn't fight with
+      // regular chat lines on busy rounds.
+      return [
+        'rounded-md border border-[#39ff14]/40 bg-black/70',
+        'px-3 py-1.5',
+        'font-mono text-sm font-bold tracking-wide',
+        'text-[#39ff14]',
+        '[text-shadow:0_0_6px_rgba(57,255,20,0.55),0_0_14px_rgba(57,255,20,0.25)]',
+      ].join(' ');
     case 'system':
       // System messages (joins / round changes) are de-emphasized.
       return 'px-2 py-0.5 text-xs italic text-white/55 text-center';
@@ -144,7 +155,9 @@ export function Chat({
                 <span
                   className={[
                     'font-semibold',
-                    m.kind === 'correct' ? 'text-green' : 'text-white',
+                    m.kind === 'correct'
+                      ? 'text-[#39ff14] [text-shadow:0_0_6px_rgba(57,255,20,0.55)]'
+                      : 'text-white',
                   ].join(' ')}
                 >
                   {m.name}
