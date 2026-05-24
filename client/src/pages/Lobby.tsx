@@ -302,8 +302,8 @@ export default function Lobby(): JSX.Element {
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center">
       <div className="relative w-full max-w-3xl flex flex-col items-center gap-8 px-4 py-10 sm:py-16">
-        <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-bg-deep drop-shadow-[0_3px_0_rgba(255,255,255,0.25)]">
-          Lobby
+        <h2 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-widest uppercase text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+          LOBBY
         </h2>
 
         <section className="glass relative w-full max-w-lg space-y-6 rounded-3xl p-6 sm:p-7">
