@@ -886,12 +886,39 @@ export default function Game(): JSX.Element {
         </h2>
       </div>
 
-      {/* Connection Status sits neatly below the header */}
-      <div className="mb-2">
+      {/* Connection status + Leave Match — same pill row so the two
+          read as a single status strip directly under the PLAYERS
+          heading. The Leave Match button is a visual clone of the
+          ConnectionStatus pill (same padding, radius, dark glass
+          background, border, typography) so the eye groups them as
+          peers. The leading dot is `bg-red-500` to signal the
+          destructive action without needing an icon. */}
+      <div className="mb-2 flex items-center gap-2">
         <ConnectionStatus
           status={connection}
           onManualReconnect={handleManualReconnect}
         />
+        {roomStatus === 'playing' ? (
+          <button
+            type="button"
+            onClick={handleLeaveMatch}
+            title="Leave this match"
+            className={[
+              'inline-flex items-center gap-2 rounded-xl border border-white/10 bg-bg-deep/60 px-3 py-1.5',
+              'shadow-[0_4px_12px_rgba(0,0,0,0.5)] backdrop-blur-md',
+              'text-sm font-sans font-medium text-white/90',
+              'transition-colors duration-150 ease-out',
+              'hover:bg-bg-deep/80 hover:border-white/20',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/50',
+            ].join(' ')}
+          >
+            <span
+              aria-hidden="true"
+              className="inline-block h-2 w-2 rounded-full bg-red-500"
+            />
+            <span className="font-medium">Leave Match</span>
+          </button>
+        ) : null}
       </div>
 
       <ul className="flex flex-col gap-2 overflow-y-auto min-h-0">
@@ -1019,55 +1046,6 @@ export default function Game(): JSX.Element {
               title="End the current round on-chain (host only)"
             >
               End round
-            </button>
-          ) : null}
-          {/*
-            LEAVE MATCH — destructive action, available to every player
-            while the match is live. Technical-brutalist styling: dark
-            translucent slab, neon-crimson accent, terminal-style
-            uppercase tracking, with a phosphor glow on hover that
-            matches the rest of the in-match UI. The button stays
-            visually tied to the End Round button (same row, same gap)
-            so they read as a footer toolbar, but the colour separates
-            it as the more destructive of the two actions. The icon is
-            an inline SVG door-with-arrow ("log out") so we don't pull
-            in an icon library for one glyph.
-          */}
-          {roomStatus === 'playing' ? (
-            <button
-              type="button"
-              onClick={handleLeaveMatch}
-              title="Leave this match — you'll be removed from the turn rotation"
-              className={[
-                'group inline-flex items-center gap-1.5',
-                'rounded-md border border-red-500/50 bg-black/80',
-                'px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest',
-                'text-red-400',
-                'transition-all duration-200 ease-out',
-                'hover:bg-red-500/10 hover:border-red-400 hover:text-red-300',
-                'hover:shadow-[0_0_15px_rgba(239,68,68,0.6)]',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60',
-                'active:translate-y-[1px]',
-              ].join(' ')}
-            >
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 24 24"
-                width="12"
-                height="12"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="transition-transform duration-200 group-hover:translate-x-[1px]"
-              >
-                {/* Door frame on the left, arrow exiting to the right. */}
-                <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-              Leave match
             </button>
           ) : null}
         </div>
