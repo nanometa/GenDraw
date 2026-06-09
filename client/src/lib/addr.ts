@@ -1,8 +1,8 @@
 /**
  * Address-display helpers used across the UI.
  *
- * The v3 GenDraw contract stores the wallet address as the player's
- * display value when the user joined without a name. We surface those
+ * The GenDraw contract stores the wallet address as the player's
+ * display value when the user joins without a name. We surface those
  * entries with a short truncated form so the chat / player list don't
  * render a 42-character hex blob.
  *

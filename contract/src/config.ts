@@ -4,12 +4,12 @@
 export const STUDIONET_RPC = 'https://studio.genlayer.com/api';
 export const STUDIONET_CHAIN_ID = 61999;
 
-/** Deployed GenDraw contract on Studionet.
+/**
+ * Deployed GenDraw contract on Studionet.
  *
- * v5: same as v4 (atomic rotate, multi-correct, capped attempts, weekly
- *  leaderboard) but with the timestamp-based week-id replaced by a
- *  manual `advance_week()` owner action. GenVM does not expose
- *  `gl.message.timestamp` so the v4 weekly leaderboard panic'd on every
- *  correct guess.
+ * This version generates round clues inside the intelligent contract with
+ * GenLayer consensus. The secret word is readable only by the drawer via
+ * `get_current_word`, while guessers read the contract-generated clue via
+ * `get_current_hint`.
  */
-export const CONTRACT_ADDRESS = '0xDcF68814DCF7a11B2AbC82Eb08854eBe93174080';
+export const CONTRACT_ADDRESS = '0xE736C7A8bA9f62bB807dA7059F9997A342893A2F';

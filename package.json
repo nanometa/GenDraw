@@ -18,6 +18,7 @@
     "test:client": "npm -w @gendraw/client run test",
     "test:server": "npm -w @gendraw/server run test",
     "lint": "eslint .",
+    "advance-week": "node scripts/advance-week.mjs",
     "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "devDependencies": {

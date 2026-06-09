@@ -5,9 +5,8 @@
  * (Components and Interfaces section). It is intentionally distinct from
  * the wire-format `RoomState` exported by `@gendraw/contract`: the wire
  * shape is what we broadcast over Socket.IO, while this server-side shape
- * additionally tracks server-only fields (the secret `currentWord`, the
- * `roundTimer`, the per-round stroke cache, etc.) that must never leak to
- * clients.
+ * additionally tracks relay-only fields such as the `roundTimer` and the
+ * per-round stroke cache. The server never stores the secret word.
  *
  * Created by task 5.1; extended by tasks 5.3 (stroke cache + replay) and
  * 5.5 (empty-room cleanup) and consumed by the socket handlers in
@@ -51,8 +50,6 @@ export interface CreateRoomOptions {
  *
  * Notable invariants enforced (or to be enforced) elsewhere:
  *  - `players.size <= maxPlayers` (Property 5, gameManager.addPlayer).
- *  - `currentWord` is non-null only while `status === 'playing'` and is
- *    only ever sent to the current Drawer's socket (Property 8).
  *  - `strokes` represents the current round's strokes only; cleared on
  *    `round:end` by task 5.3.
  */
@@ -75,12 +72,6 @@ export interface ServerRoomState {
   roundNumber: number;
   /** Total rounds for the game (Requirement 2.1 bounds). */
   totalRounds: number;
-  /**
-   * Secret word for the current round. Server-only — never broadcast.
-   * Populated by `views.getCurrentWord` and unicast to the Drawer via
-   * `word:assign` (task 9.1).
-   */
-  currentWord: string | null;
   /**
    * Cached strokes for the current round. Used by task 5.3 to replay the
    * in-progress drawing to late joiners (Requirement 6.9). Cleared on
@@ -143,7 +134,6 @@ export function createRoom(options: CreateRoomOptions): ServerRoomState {
     currentDrawerIndex: 0,
     roundNumber: 0,
     totalRounds,
-    currentWord: null,
     strokes: [],
     scores: {},
     guessedThisRound: new Set(),

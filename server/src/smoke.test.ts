@@ -17,6 +17,6 @@ describe('server toolchain smoke', () => {
   });
 
   it('resolves the shared contract package', () => {
-    expect(CONTRACT_ADDRESS).toBe('0xDcF68814DCF7a11B2AbC82Eb08854eBe93174080');
+    expect(CONTRACT_ADDRESS).toBe('0xE736C7A8bA9f62bB807dA7059F9997A342893A2F');
   });
 });

@@ -2,8 +2,8 @@
  * Inline weekly leaderboard preview for the Home SPA. Renders top-5 of
  * the current week without a wrapping card.
  *
- * v5 contract: the week id is owner-controlled (no automatic rollover),
- * so the panel just shows "Week #N" instead of a countdown.
+ * The week id is owner-controlled, so the panel just shows "Week #N"
+ * instead of a countdown.
  */
 
 import { useEffect, useState } from 'react';

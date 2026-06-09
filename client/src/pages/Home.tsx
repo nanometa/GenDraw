@@ -24,6 +24,7 @@ import {
 import InlineCreatePanel from './home/InlineCreatePanel';
 import InlineJoinPanel from './home/InlineJoinPanel';
 import InlineLeaderboardPanel from './home/InlineLeaderboardPanel';
+import InlineWordPoolPanel from './home/InlineWordPoolPanel';
 
 /**
  * Background photos for the three slides. Picked to match the
@@ -46,6 +47,7 @@ const _SLIDE_BG = {
 const TABS = [
   { label: 'Create Room' },
   { label: 'Join Room' },
+  { label: 'Word Bank' },
   { label: 'Leaderboard' },
 ] as const;
 
@@ -141,6 +143,14 @@ export default function Home(): JSX.Element {
       rightLabel: '',
       title: 'Join Room',
       content: <InlineJoinPanel />,
+      background: '',
+    },
+    {
+      id: 'words',
+      leftLabel: '',
+      rightLabel: '',
+      title: 'Word Bank',
+      content: <InlineWordPoolPanel />,
       background: '',
     },
     {

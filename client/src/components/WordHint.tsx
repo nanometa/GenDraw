@@ -4,17 +4,16 @@
  * Validates Requirements 7.1, 7.2, 7.3, 7.4:
  *  - Drawer (or after a reveal at round end / on a correct guess) sees the
  *    full Word above the canvas (Req 7.1, 7.4).
- *  - Guessers see the masked hint produced by {@link buildHint} — letters
- *    replaced by underscores while spaces and hyphens are preserved
- *    (Req 7.2).
+ *  - If a non-drawer view receives a revealed word, it can render the
+ *    masked fallback produced by {@link buildHint}.
  *  - Each character is rendered in its own `<span>` with a small horizontal
  *    margin so spaces become a visibly wider gap and underscores appear
  *    distinguishable as individual letter slots (Req 7.3).
  *
- * The component is purely presentational. The decision of *what* word to
- * pass in (the secret Word for the Drawer, `null` for guessers before a
- * reveal, etc.) is the caller's responsibility — typically derived from
- * `gameStore.word` and `gameStore.wordHint`.
+ * The component is purely presentational. The decision of what word to
+ * pass in is the caller's responsibility. During active play, the current
+ * app passes the secret word only for the drawer; guessers see the
+ * contract-generated clue elsewhere in the game UI.
  */
 
 import { buildHint } from '../lib/wordHint';

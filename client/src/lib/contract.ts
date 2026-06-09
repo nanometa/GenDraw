@@ -9,9 +9,11 @@
 
 import { createClient } from 'genlayer-js';
 import {
+  ExecutionResult,
   TransactionStatus,
   type CalldataEncodable,
   type GenLayerClient,
+  type GenLayerTransaction,
   type TransactionHash,
 } from 'genlayer-js/types';
 import type { WalletClient } from 'viem';
@@ -59,6 +61,63 @@ export class ContractError extends Error {
 function errorMessage(err: unknown): string {
   if (err instanceof Error && err.message) return err.message;
   return String(err);
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
+function cleanString(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+function failureMessageFrom(value: unknown, depth = 0): string | null {
+  if (!isRecord(value) || depth > 3) return null;
+
+  for (const key of ['error', 'stderr', 'message']) {
+    const found = cleanString(value[key]);
+    if (found !== null) return found;
+  }
+
+  for (const key of ['genvm_result', 'execution_result', 'result']) {
+    const nested = failureMessageFrom(value[key], depth + 1);
+    if (nested !== null) return nested;
+  }
+
+  return null;
+}
+
+function receiptErrorMessage(receipt: GenLayerTransaction): string | null {
+  const leaderReceipt = receipt.consensus_data?.leader_receipt;
+  if (!Array.isArray(leaderReceipt)) return null;
+  for (const item of leaderReceipt) {
+    const message = failureMessageFrom(item);
+    if (message !== null) return message;
+  }
+  return null;
+}
+
+function assertExecutionSucceeded(
+  operation: string,
+  receipt: GenLayerTransaction,
+): void {
+  if (receipt.txExecutionResultName === ExecutionResult.FINISHED_WITH_RETURN) {
+    return;
+  }
+
+  if (receipt.txExecutionResultName === ExecutionResult.FINISHED_WITH_ERROR) {
+    throw new ContractError(
+      operation,
+      receiptErrorMessage(receipt) ?? 'contract rejected the transaction',
+    );
+  }
+
+  throw new ContractError(
+    operation,
+    'contract judgment is not available yet',
+  );
 }
 
 // ─── Client factories ──────────────────────────────────────────────────────
@@ -196,6 +255,36 @@ export async function getCurrentWord(
   return raw;
 }
 
+/**
+ * Returns the contract-generated clue for the active round. The contract
+ * returns "" for the drawer, spectators, inactive rooms, or before the clue
+ * is available.
+ */
+export async function getCurrentHint(
+  client: ReadClient | WriteClient,
+  roomId: string,
+  fromAddress?: `0x${string}`,
+): Promise<string> {
+  const raw = await read('get_current_hint', () =>
+    client.readContract({
+      address: CONTRACT_ADDRESS,
+      functionName: 'get_current_hint',
+      args: [roomId],
+      ...(fromAddress !== undefined
+        ? { account: { address: fromAddress } as never }
+        : {}),
+    }),
+  );
+  if (raw === null || raw === undefined) return '';
+  if (typeof raw !== 'string') {
+    throw new ContractError(
+      'get_current_hint',
+      `expected string, got ${typeof raw}`,
+    );
+  }
+  return raw;
+}
+
 export async function getLeaderboard(
   client: ReadClient,
   roomId: string,
@@ -253,6 +342,31 @@ export async function getPoolSize(client: ReadClient): Promise<number> {
     }),
   );
   return toNumber('get_pool_size', raw);
+}
+
+/** Recently selected secret words, as tracked by the contract. */
+export async function getRecentWords(client: ReadClient): Promise<string[]> {
+  const raw = await read('get_recent_words', () =>
+    client.readContract({
+      address: CONTRACT_ADDRESS,
+      functionName: 'get_recent_words',
+    }),
+  );
+  if (raw === null || raw === undefined) return [];
+  if (typeof raw !== 'string') {
+    throw new ContractError(
+      'get_recent_words',
+      `expected string, got ${typeof raw}`,
+    );
+  }
+  if (raw.length === 0 || raw === '[]') return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((word): word is string => typeof word === 'string');
+  } catch (err) {
+    throw new ContractError('get_recent_words', errorMessage(err), err);
+  }
 }
 
 /**
@@ -355,11 +469,19 @@ export interface CreateRoomResult extends WriteResult {
   roomId: string;
 }
 
+type ReceiptWaitArgs = Parameters<
+  WriteClient['waitForTransactionReceipt']
+>[0] & {
+  // Supported by genlayer-js at runtime, but absent from the published d.ts.
+  fullTransaction?: boolean;
+};
+
 async function submitWrite(
   client: WriteClient,
   operation: string,
   functionName: string,
   args: ReadonlyArray<CalldataEncodable>,
+  verifyExecutionResult = false,
 ): Promise<TransactionHash> {
   let hash: TransactionHash;
   try {
@@ -380,22 +502,39 @@ async function submitWrite(
   // Even if the wait throws (consensus timeout, RPC blip), the tx hash
   // is already on-chain — we hand it back so the caller can show the
   // explorer link and the lobby's contract poll picks up the new state
-  // a few seconds later. We deliberately do NOT throw
-  // ConsensusTimeoutError on the ACCEPTED-wait path because that would
-  // make every long-running write look like a failure to the user.
+  // a few seconds later. Callers that must prove the execution result
+  // before updating local state can opt into finalized verification.
+  const waitStatus = verifyExecutionResult
+    ? TransactionStatus.FINALIZED
+    : TransactionStatus.ACCEPTED;
   try {
-    await client.waitForTransactionReceipt({
+    const waitArgs: ReceiptWaitArgs = {
       hash,
-      status: TransactionStatus.ACCEPTED,
+      status: waitStatus,
       interval: 2_000,
-      retries: 90,
-    });
+      retries: verifyExecutionResult ? 150 : 90,
+      ...(verifyExecutionResult ? { fullTransaction: true } : {}),
+    };
+    const receipt = await client.waitForTransactionReceipt(waitArgs);
+    if (verifyExecutionResult) {
+      assertExecutionSucceeded(operation, receipt);
+    }
   } catch (err) {
+    if (err instanceof ContractError) {
+      throw err;
+    }
     // eslint-disable-next-line no-console
     console.warn(
-      `[contract] ${operation} tx ${hash} did not reach ACCEPTED in time`,
+      `[contract] ${operation} tx ${hash} did not reach ${waitStatus} in time`,
       err,
     );
+    if (verifyExecutionResult) {
+      throw new ContractError(
+        operation,
+        `transaction was not finalized: ${errorMessage(err)}`,
+        err,
+      );
+    }
     // Swallow — caller already has the hash. The on-chain state poll
     // (Lobby's setInterval) will reflect the change once consensus
     // catches up.
@@ -478,5 +617,20 @@ export async function endRound(
   roomId: string,
 ): Promise<WriteResult> {
   const hash = await submitWrite(client, 'end_round', 'end_round', [roomId]);
+  return { hash };
+}
+
+export async function addWords(
+  client: WriteClient,
+  words: string[],
+): Promise<WriteResult> {
+  const hash = await submitWrite(client, 'add_words', 'add_words', [words]);
+  return { hash };
+}
+
+export async function advanceWeek(
+  client: WriteClient,
+): Promise<WriteResult> {
+  const hash = await submitWrite(client, 'advance_week', 'advance_week', []);
   return { hash };
 }

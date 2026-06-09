@@ -2,7 +2,7 @@
  * Weekly leaderboard page (`/leaderboard`).
  *
  * Reads `get_weekly_leaderboard(50)` + `get_current_week_id()` from the
- * v5 GenDraw contract and renders the top scorers of the current week.
+ * GenDraw contract and renders the top scorers of the current week.
  * The contract's week id is manually controlled by the owner so we do
  * not show a countdown; instead a small "Current week #N" label keeps
  * the user oriented.
@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   createReadClient,
   getCurrentWeekId,
-  getWeeklyLeaderboard,
+  getWeeklyLeaderboardFor,
   type WeeklyLeaderboardEntry,
 } from '../lib/contract';
 import { displayName, shortAddr } from '../lib/addr';
@@ -39,20 +39,25 @@ export default function Leaderboard(): JSX.Element {
   const [entries, setEntries] = useState<WeeklyLeaderboardEntry[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [weekId, setWeekId] = useState<number>(0);
+  const [currentWeekId, setCurrentWeekId] = useState<number>(0);
+  const [viewedWeekId, setViewedWeekId] = useState<number | null>(null);
+
+  const activeWeekId = viewedWeekId ?? currentWeekId;
 
   useEffect(() => {
     let cancelled = false;
     const client = createReadClient();
     const refresh = async (): Promise<void> => {
       try {
-        const [board, wid] = await Promise.all([
-          getWeeklyLeaderboard(client, 50),
-          getCurrentWeekId(client),
-        ]);
+        const wid = await getCurrentWeekId(client);
+        const targetWeek = viewedWeekId ?? wid;
+        const board = await getWeeklyLeaderboardFor(client, targetWeek, 50);
         if (cancelled) return;
         setEntries(board);
-        setWeekId(wid);
+        setCurrentWeekId(wid);
+        if (viewedWeekId === null) {
+          setViewedWeekId(wid);
+        }
         setLoaded(true);
         setError(null);
       } catch (err) {
@@ -67,7 +72,7 @@ export default function Leaderboard(): JSX.Element {
       cancelled = true;
       window.clearInterval(handle);
     };
-  }, []);
+  }, [viewedWeekId]);
 
   return (
     <main className="relative min-h-screen overflow-hidden flex items-center justify-center">
@@ -83,8 +88,43 @@ export default function Leaderboard(): JSX.Element {
             </p>
             <div className="flex items-center justify-center">
               <span className="inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-5 py-2 font-mono text-lg font-bold text-white shadow-sm">
-                Week #{weekId}
+                Week #{activeWeekId}
               </span>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setLoaded(false);
+                  setViewedWeekId(Math.max(0, activeWeekId - 1));
+                }}
+                disabled={activeWeekId <= 0}
+                className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/70 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoaded(false);
+                  setViewedWeekId(currentWeekId);
+                }}
+                disabled={activeWeekId === currentWeekId}
+                className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/70 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Current
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoaded(false);
+                  setViewedWeekId(Math.min(currentWeekId, activeWeekId + 1));
+                }}
+                disabled={activeWeekId >= currentWeekId}
+                className="rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-white/70 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Next
+              </button>
             </div>
           </div>
 

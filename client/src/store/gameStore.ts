@@ -4,8 +4,8 @@
  * Mirrors the design document's "Client State (Zustand)" section. The store
  * holds identity slots (wallet/name copied from `walletStore`), room slots
  * driven by `game:state` and `player:joined` / `player:left` socket events,
- * round slots populated by `word:assign`, `draw:stroke`, `draw:clear`, and
- * `strokes:replay`, and network slots updated by the socket transport.
+ * round slots populated by contract polling, `draw:stroke`, `draw:clear`,
+ * and `strokes:replay`, and network slots updated by the socket transport.
  *
  * All mutations go through Zustand's `set()` which is synchronous, so the
  * "update local UI state within one rendering frame" guarantee from
@@ -92,8 +92,6 @@ export interface GameStore {
   // ── round ───────────────────────────────────────────────────────────────
   /** Populated only for the current Drawer (Requirement 7.1). */
   word: string | null;
-  /** Masked hint shown to Guessers (Requirement 7.2). */
-  wordHint: string | null;
   /** Strokes recorded for the current round; cleared on `applyClear`. */
   strokes: Stroke[];
   scores: Record<string, number>;
@@ -116,7 +114,6 @@ export interface GameStore {
   applyPlayerLeft(address: string): void;
   applyGameState(state: RoomState): void;
   setWord(word: string | null): void;
-  setWordHint(hint: string | null): void;
   applyStroke(stroke: Stroke): void;
   setStrokes(strokes: Stroke[]): void;
   applyClear(): void;
@@ -143,7 +140,6 @@ const INITIAL_STATE: Omit<
   | 'applyPlayerLeft'
   | 'applyGameState'
   | 'setWord'
-  | 'setWordHint'
   | 'applyStroke'
   | 'setStrokes'
   | 'applyClear'
@@ -168,7 +164,6 @@ const INITIAL_STATE: Omit<
   totalRounds: 0,
 
   word: null,
-  wordHint: null,
   strokes: [],
   scores: {},
 
@@ -235,10 +230,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setWord(word) {
     set({ word });
-  },
-
-  setWordHint(hint) {
-    set({ wordHint: hint });
   },
 
   applyStroke(stroke) {

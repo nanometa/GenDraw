@@ -1,15 +1,35 @@
 [
   {
     "type": "function",
+    "name": "add_words",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "words", "type": "string[]" }
+    ],
+    "outputs": [
+      { "name": "added", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "advance_week",
+    "stateMutability": "nonpayable",
+    "inputs": [],
+    "outputs": [
+      { "name": "week_id", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
     "name": "create_room",
     "stateMutability": "nonpayable",
     "inputs": [
-      { "name": "name", "type": "string" },
-      { "name": "max_players", "type": "uint8" },
-      { "name": "total_rounds", "type": "uint8" }
+      { "name": "room_name", "type": "string" },
+      { "name": "max_players", "type": "uint256" },
+      { "name": "rounds", "type": "uint256" }
     ],
     "outputs": [
-      { "name": "room_id", "type": "uint256" }
+      { "name": "room_id", "type": "string" }
     ]
   },
   {
@@ -17,7 +37,7 @@
     "name": "join_room",
     "stateMutability": "nonpayable",
     "inputs": [
-      { "name": "room_id", "type": "uint256" },
+      { "name": "room_id", "type": "string" },
       { "name": "player_name", "type": "string" }
     ],
     "outputs": []
@@ -27,7 +47,7 @@
     "name": "start_game",
     "stateMutability": "nonpayable",
     "inputs": [
-      { "name": "room_id", "type": "uint256" }
+      { "name": "room_id", "type": "string" }
     ],
     "outputs": []
   },
@@ -36,29 +56,29 @@
     "name": "submit_guess",
     "stateMutability": "nonpayable",
     "inputs": [
-      { "name": "room_id", "type": "uint256" },
+      { "name": "room_id", "type": "string" },
       { "name": "guess", "type": "string" }
     ],
-    "outputs": [
-      { "name": "correct", "type": "bool" }
-    ]
+    "outputs": []
   },
   {
     "type": "function",
     "name": "end_round",
     "stateMutability": "nonpayable",
     "inputs": [
-      { "name": "room_id", "type": "uint256" }
+      { "name": "room_id", "type": "string" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "get_room",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "room_id", "type": "string" }
     ],
     "outputs": [
-      {
-        "name": "scores",
-        "type": "tuple[]",
-        "components": [
-          { "name": "player", "type": "address" },
-          { "name": "score", "type": "uint256" }
-        ]
-      }
+      { "name": "room_json", "type": "string" }
     ]
   },
   {
@@ -66,10 +86,32 @@
     "name": "get_current_word",
     "stateMutability": "view",
     "inputs": [
-      { "name": "room_id", "type": "uint256" }
+      { "name": "room_id", "type": "string" }
     ],
     "outputs": [
       { "name": "word", "type": "string" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_current_hint",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "room_id", "type": "string" }
+    ],
+    "outputs": [
+      { "name": "hint", "type": "string" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_leaderboard",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "room_id", "type": "string" }
+    ],
+    "outputs": [
+      { "name": "leaderboard_json", "type": "string" }
     ]
   },
   {
@@ -92,21 +134,52 @@
   },
   {
     "type": "function",
-    "name": "get_leaderboard",
+    "name": "get_pool_size",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "size", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_recent_words",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "words_json", "type": "string" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_current_week_id",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [
+      { "name": "week_id", "type": "uint256" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_weekly_leaderboard",
     "stateMutability": "view",
     "inputs": [
-      { "name": "room_id", "type": "uint256" }
+      { "name": "top_n", "type": "uint256" }
     ],
     "outputs": [
-      {
-        "name": "entries",
-        "type": "tuple[]",
-        "components": [
-          { "name": "player", "type": "address" },
-          { "name": "name", "type": "string" },
-          { "name": "score", "type": "uint256" }
-        ]
-      }
+      { "name": "leaderboard_json", "type": "string" }
+    ]
+  },
+  {
+    "type": "function",
+    "name": "get_weekly_leaderboard_for",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "week_id", "type": "uint256" },
+      { "name": "top_n", "type": "uint256" }
+    ],
+    "outputs": [
+      { "name": "leaderboard_json", "type": "string" }
     ]
   }
 ]

@@ -49,7 +49,10 @@ import Toolbar, { TOOLBAR_PALETTE } from '../components/Canvas/Toolbar';
 import ConnectionStatus from '../components/ConnectionStatus';
 import WordHint from '../components/WordHint';
 
-import { submitGuess as submitGuessTx, endRound as endRoundTx } from '../lib/contract';
+import {
+  endRound as endRoundTx,
+  submitGuess as submitGuessTx,
+} from '../lib/contract';
 import { sanitizeGuess } from '../lib/guess';
 import {
   createSocketClient,
@@ -63,6 +66,7 @@ import { displayName, shortAddr } from '../lib/addr';
 import SiteWordmark from '../components/SiteWordmark';
 import {
   createReadClient,
+  getCurrentHint,
   getCurrentWord,
   getRoom,
 } from '../lib/contract';
@@ -160,7 +164,7 @@ export default function Game(): JSX.Element {
   // can compute `isHost` against the live wagmi address even if the
   // gameStore's `walletAddress` slot is stale (it's only set by the
   // CreateRoom / JoinRoom submit flows, not on a fresh page load).
-  // Local mirror of the v3 contract turn state. Updated by the contract
+  // Local mirror of the on-chain turn state. Updated by the contract
   // poll (effect 3) and read by:
   //  - the canvas-wipe effect (clear on drawer rotation, not just round)
   //  - the chat input disabled flag (out of attempts / already correct)
@@ -198,6 +202,7 @@ export default function Game(): JSX.Element {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [roundEnd, setRoundEnd] = useState<RoundEndState>(INITIAL_ROUND_END);
+  const [acceptedHint, setAcceptedHint] = useState<string>('');
 
   // Refs that need to outlive renders (transport, canvas handle).
   const socketRef = useRef<SocketClient | null>(null);
@@ -210,9 +215,8 @@ export default function Game(): JSX.Element {
 
   // Refs that track the host's manual end-round button. Re-entrancy
   // guard so a double-click can't fire two end_round txs back-to-back.
-  // (With the v2 contract `submit_guess` auto-rotates the drawer on a
-  //  correct guess, so end_round is now strictly a manual "skip this
-  //  round, nobody guessed" fallback, not an auto-trigger.)
+  // The contract auto-rotates the drawer on a correct guess, so end_round
+  // is strictly a manual "skip this round, nobody guessed" fallback.
   const endRoundFiredForRoundRef = useRef<number>(-1);
   const endRoundInflightRef = useRef<boolean>(false);
 
@@ -306,10 +310,6 @@ export default function Game(): JSX.Element {
     };
 
     // ── word secrecy ─────────────────────────────────────────────────────
-    const handleWordAssign = (payload: { word: string }): void => {
-      setWord(payload.word);
-    };
-
     // ── drawing fan-out ──────────────────────────────────────────────────
     const handleDrawStroke = (wire: WireStroke): void => {
       applyStroke(fromWire(wire));
@@ -495,7 +495,6 @@ export default function Game(): JSX.Element {
     socket.on('player:joined', handlePlayerJoined);
     socket.on('player:left', handlePlayerLeft);
     socket.on('game:state', handleGameState);
-    socket.on('word:assign', handleWordAssign);
     socket.on('draw:stroke', handleDrawStroke);
     socket.on('draw:clear', handleDrawClear);
     socket.on('strokes:replay', handleStrokesReplay);
@@ -513,7 +512,6 @@ export default function Game(): JSX.Element {
       socket.off('player:joined', handlePlayerJoined);
       socket.off('player:left', handlePlayerLeft);
       socket.off('game:state', handleGameState);
-      socket.off('word:assign', handleWordAssign);
       socket.off('draw:stroke', handleDrawStroke);
       socket.off('draw:clear', handleDrawClear);
       socket.off('strokes:replay', handleStrokesReplay);
@@ -565,9 +563,8 @@ export default function Game(): JSX.Element {
           ([address, name]) => ({ address, name }),
         );
         setHostAddress(room.host);
-        // v3 turn-state mirrors. `turn` is undefined on a v2-shaped room
-        // payload, so we fall back to the round number (no change to
-        // canvas wipe behaviour for legacy rooms).
+        // Turn-state mirrors. If a partial room payload misses `turn`,
+        // fall back to the current round so the UI stays stable.
         const liveTurn = typeof room.turn === 'number'
           ? room.turn
           : room.current_round;
@@ -624,10 +621,9 @@ export default function Game(): JSX.Element {
   // ── 3b. Wipe the canvas on every drawer rotation ──────────────────────
   // The authoritative signal that a turn has flipped is the on-chain
   // `current_drawer` rotating to a new address. Watching that directly
-  // (rather than the contract's `turn` counter, which v5 doesn't always
-  // expose, or the `current_round` counter, which only bumps once every
-  // few drawer rotations) guarantees every connected client wipes its
-  // canvas at the exact moment a new player takes the brush.
+  // (rather than only the `turn` or `current_round` counters) guarantees
+  // every connected client wipes its canvas at the exact moment a new
+  // player takes the brush.
   //
   // Each peer's contract poll independently observes the same drawer
   // change, so each peer:
@@ -656,6 +652,7 @@ export default function Game(): JSX.Element {
     if (isFirstStart) return;
 
     applyClear();
+    setAcceptedHint('');
     socketRef.current?.socket.emit('draw:clear');
     setMessages((prev) => [
       ...prev,
@@ -713,8 +710,44 @@ export default function Game(): JSX.Element {
     };
   }, [isDrawer, writeClient, routeRoomId, roundNumber, walletAddress, setWord]);
 
-  // ── 4b. (removed in v2) ────────────────────────────────────────────
-  // The v2 contract atomically rotates the drawer + advances the round
+  useEffect(() => {
+    if (roomStatus !== 'playing' || isDrawer) {
+      setAcceptedHint('');
+      return;
+    }
+    if (routeRoomId === undefined) return;
+    if (walletAddress.length === 0) return;
+
+    let cancelled = false;
+    const readClient = createReadClient();
+
+    const fetchHint = async (): Promise<void> => {
+      try {
+        const hint = await getCurrentHint(
+          readClient,
+          routeRoomId,
+          walletAddress as `0x${string}`,
+        );
+        if (cancelled) return;
+        setAcceptedHint(hint);
+      } catch {
+        /* transient - next tick will retry */
+      }
+    };
+
+    void fetchHint();
+    const handle = window.setInterval(() => {
+      void fetchHint();
+    }, 2_000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(handle);
+    };
+  }, [isDrawer, routeRoomId, roomStatus, turnNumber, walletAddress]);
+
+  // ── 4b. Contract-driven turn advance ───────────────────────────────
+  // The contract atomically rotates the drawer + advances the round
   // inside `submit_guess` whenever a guess matches. The contract poll
   // (effect 3) picks up the new `current_drawer` / `current_round`
   // within ~2 s, so no client-side end_round trigger is needed on the
@@ -1031,8 +1064,16 @@ export default function Game(): JSX.Element {
         )}
       </div>
       <div className="flex flex-col items-center gap-1.5 pb-1">
-        {roomStatus === 'playing' ? (
-          <WordHint word={isDrawer ? word : null} isDrawer={isDrawer} />
+        {roomStatus === 'playing' && isDrawer ? (
+          <WordHint word={word} isDrawer={isDrawer} />
+        ) : null}
+        {roomStatus === 'playing' && !isDrawer && acceptedHint.length > 0 ? (
+          <div className="w-full max-w-xl rounded-xl border border-[#00FF66]/35 bg-[#00FF66]/10 px-3 py-2 text-center text-xs font-bold uppercase tracking-widest text-[#00FF66]">
+            Clue:{' '}
+            <span className="normal-case tracking-normal">
+              {acceptedHint}
+            </span>
+          </div>
         ) : null}
         <div className="flex items-center justify-center gap-3 text-xs text-white/60">
           <span>
